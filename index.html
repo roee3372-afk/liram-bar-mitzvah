@@ -280,8 +280,8 @@ function act(a){
   const wh=slots[cur].querySelector('.wh');if(wh._dragged&&Date.now()-wh._dragged<250)return;
   const p=P[cur];
   if(a==='menu'){tick(1200);hl=playCtx===p.id&&playIdx>=0?playIdx:hl;renderList();scrollTo(hl);return}
-  if(a==='next'){tick(2000);if(playCtx===p.id&&token())return api('POST','/me/player/next').then(()=>{playIdx=Math.min(playIdx+1,p.s.length-1);hl=playIdx;render();scrollTo(hl);soon()});hl=Math.min(hl+1,p.s.length-1);render();scrollTo(hl);return}
-  if(a==='prev'){tick(1600);if(playCtx===p.id&&token())return api('POST','/me/player/previous').then(()=>{playIdx=Math.max(playIdx-1,0);hl=playIdx;render();scrollTo(hl);soon()});hl=Math.max(hl-1,0);render();scrollTo(hl);return}
+  if(a==='next'){tick(2000);if(playCtx===p.id&&token())return withDevice(dev=>api('POST','/me/player/next'+(dev?'?device_id='+dev:''),null,true)).then(r=>{if(r!==true){playAt(Math.min(playIdx+1,p.s.length-1));return}playIdx=Math.min(playIdx+1,p.s.length-1);hl=playIdx;render();scrollTo(hl);soon()});hl=Math.min(hl+1,p.s.length-1);render();scrollTo(hl);return}
+  if(a==='prev'){tick(1600);if(playCtx===p.id&&token())return withDevice(dev=>api('POST','/me/player/previous'+(dev?'?device_id='+dev:''),null,true)).then(r=>{if(r!==true){playAt(Math.max(playIdx-1,0));return}playIdx=Math.max(playIdx-1,0);hl=playIdx;render();scrollTo(hl);soon()});hl=Math.max(hl-1,0);render();scrollTo(hl);return}
   if(a==='play'){tick(900);toggle();return}
   if(a==='center'){tick(900);if(playCtx===p.id&&(hl===playIdx))toggle();else playAt(hl);}
 }
@@ -291,20 +291,51 @@ function toggle(){
   if(playCtx!==p.id){playAt(hl);return}
   if(!token()){openTrack(p,hl);return}
   if(playing){api('PUT','/me/player/pause').then(()=>{playing=false;render()})}
-  else{api('PUT','/me/player/play').then(()=>{playing=true;render()})}
+  else{withDevice(dev=>api('PUT','/me/player/play'+(dev?'?device_id='+dev:''),null,true)).then(r=>{if(r===true){playing=true;render();soon()}else{pending={ctx:p.id,idx:playIdx<0?hl:playIdx};wakeSpotify(p,pending.idx)}})}
 }
 
 async function playAt(i){
   const p=P[cur];hl=i;
   if(!token()){openTrack(p,i);return}
   const body={context_uri:'spotify:playlist:'+p.id,offset:{position:i},position_ms:0};
-  const ok=await api('PUT','/me/player/play',body,true);
-  if(ok==='nodevice'){
-    const dev=await pickDevice();
-    if(!dev){toast('לא נמצא נגן פעיל. פתחו את אפליקציית ספוטיפיי באייפד, ואז נגעו שוב בשיר.<br><a href="https://open.spotify.com/playlist/'+p.id+'" target="_blank" rel="noopener">פתיחת ספוטיפיי</a>',7000);return}
-    const ok2=await api('PUT','/me/player/play?device_id='+dev.id,body,true);if(ok2!==true){toast('ספוטיפיי לא הצליח לנגן. נסו שוב.');return}
-  }else if(ok!==true){toast('ספוטיפיי לא הצליח לנגן. נסו שוב.');return}
-  playCtx=p.id;playIdx=i;playing=true;progMs=0;durMs=0;lastSync=Date.now();render();scrollTo(i);wake();soon();
+  const ok=await withDevice(dev=>api('PUT','/me/player/play'+(dev?'?device_id='+dev:''),body,true));
+  if(ok!==true){
+    if(ok==='nodevice'){pending={ctx:p.id,idx:i};wakeSpotify(p,i)}
+    else toast('ספוטיפיי לא הצליח לנגן. נסו שוב.');
+    return}
+  pending=null;playCtx=p.id;playIdx=i;playing=true;progMs=0;durMs=0;lastSync=Date.now();render();scrollTo(i);wake();soon();
+}
+/* try: active device -> remembered device (transfer) -> any listed device */
+async function withDevice(call){
+  let r=await call(null);if(r!=='nodevice')return r;
+  const saved=store.get('sp_dev');
+  if(saved){
+    await api('PUT','/me/player',{device_ids:[saved],play:false},true);
+    await sleep(500);
+    r=await call(saved);if(r!=='nodevice'&&r!==false)return r;
+  }
+  const dev=await pickDevice();
+  if(dev){store.set('sp_dev',dev.id);r=await call(dev.id);if(r!=='nodevice'&&r!==false)return r}
+  return 'nodevice';
+}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let pending=null;
+function wakeSpotify(p,i){
+  const s=p.s[i];const uri=s&&s.uri?s.uri:'spotify:playlist:'+p.id;
+  toast('ספוטיפיי באייפד נרדם. <a href="'+uri+'">נגעו כאן כדי להעיר אותו</a>, ואז חזרו לכאן. השיר יתחיל לבד.',12000);
+}
+/* when returning to this page after waking Spotify, retry the pending song a few times */
+async function retryPending(){
+  if(!pending||!token())return;
+  const want=pending;
+  for(let k=0;k<6&&pending===want;k++){
+    await sleep(1200);
+    const pi=P.findIndex(x=>x.id===want.ctx);if(pi<0)return;
+    if(cur!==pi){cur=pi;render()}
+    const body={context_uri:'spotify:playlist:'+want.ctx,offset:{position:want.idx},position_ms:0};
+    const r=await withDevice(dev=>api('PUT','/me/player/play'+(dev?'?device_id='+dev:''),body,true));
+    if(r===true){pending=null;playCtx=want.ctx;playIdx=want.idx;hl=want.idx;playing=true;lastSync=Date.now();toast('מנגן ✓',1800);render();scrollTo(want.idx);soon();return}
+  }
 }
 function openTrack(p,i){
   const s=p.s[i];const url=s&&s.uri?'https://open.spotify.com/track/'+s.uri.split(':').pop():'https://open.spotify.com/playlist/'+p.id;
@@ -320,6 +351,7 @@ let syncT=null;function soon(){clearTimeout(syncT);syncT=setTimeout(sync,900)}
 async function sync(){
   if(!token())return;
   const r=await api('GET','/me/player');
+  if(r&&r.device&&r.device.id)store.set('sp_dev',r.device.id);
   if(r&&r.item){
     playing=!!r.is_playing;progMs=r.progress_ms||0;durMs=r.item.duration_ms||0;lastSync=Date.now();
     const ctx=r.context&&r.context.uri&&r.context.uri.split(':').pop();
@@ -338,7 +370,9 @@ setInterval(()=>{
 
 /* keep screen awake while playing */
 let wl=null;async function wake(){try{if('wakeLock' in navigator&&!wl){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>wl=null)}}catch(e){}}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){sync();if(playing)wake()}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(pending)retryPending();else sync();if(playing)wake()}});
+addEventListener('pageshow',()=>{if(pending)retryPending()});
+addEventListener('focus',()=>{if(pending)retryPending()});
 
 /* ---------- auth (PKCE) ---------- */
 function token(){const t=store.get('sp_tok'),x=+store.get('sp_exp')||0;return t&&Date.now()<x?t:(store.get('sp_ref')?'refresh':null)}
@@ -373,7 +407,7 @@ async function api(method,path,body,playCall){
     if(r.status===204||r.status===202)return method==='GET'?null:true;
     if(r.status===404&&playCall)return 'nodevice';
     if(r.status===401){store.del('sp_tok');return false}
-    if(!r.ok){if(r.status===404&&path.startsWith('/me/player/')&&method!=='GET'){toast('פתחו את אפליקציית ספוטיפיי באייפד ונסו שוב.')}return false}
+    if(!r.ok)return false;
     const txt=await r.text();return txt?JSON.parse(txt):true;
   }catch(e){toast('אין חיבור לאינטרנט.');return false}
 }
