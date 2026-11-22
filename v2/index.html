@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#f3f1ff">
 <title>הפלייליסטים של לירם</title>
@@ -10,14 +10,36 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Karantina:wght@400;700&family=Rubik:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f3f1ff;--ink:#1e1b2e;--ink2:#6a6480;--card:#fff;--c:#7c4dff;--d:#5a2fd6;--ease:cubic-bezier(.2,.9,.3,1.15)}
+:root{--t-small:14px;--t-body:17px;--t-h3:30px;--t-h2:44px;--t-h1:64px;--bg:#f3f1ff;--ink:#1e1b2e;--ink2:#5f5875;--card:#fff;--c:#7c4dff;--d:#5a2fd6;--ease:cubic-bezier(.2,.9,.3,1.15)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Rubik,system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
 button{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--c);outline-offset:3px}
-.app{height:100%;overflow-y:auto;padding:max(22px,env(safe-area-inset-top)) max(28px,env(safe-area-inset-right)) 140px max(28px,env(safe-area-inset-left))}
+.blobs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.blobs i{position:absolute;width:46vmax;height:46vmax;border-radius:50%;background:var(--c);filter:blur(90px);opacity:.16;transition:background 1.2s}
+.blobs i:nth-child(1){top:-18vmax;right:-12vmax;animation:dr1 26s ease-in-out infinite alternate}
+.blobs i:nth-child(2){bottom:-22vmax;left:-14vmax;background:var(--d);animation:dr2 32s ease-in-out infinite alternate}
+.blobs i:nth-child(3){top:30%;left:35%;width:30vmax;height:30vmax;opacity:.1;animation:dr1 38s ease-in-out infinite alternate-reverse}
+@keyframes dr1{to{transform:translate(-14vmax,10vmax) scale(1.15)}}
+@keyframes dr2{to{transform:translate(12vmax,-8vmax) scale(.9)}}
+body.live .blobs i{opacity:.24}
+.app{position:relative;z-index:1;height:100%;overflow-y:auto;padding:max(22px,env(safe-area-inset-top)) max(28px,env(safe-area-inset-right)) 140px max(28px,env(safe-area-inset-left))}
 .top{position:relative;text-align:center;margin:4px 0 34px}
 .top .chip{position:absolute;top:0;inset-inline-end:0}
+.top .dchip{inset-inline-end:auto;inset-inline-start:0}
+.search{position:relative;max-width:520px;margin:22px auto 0}
+.search input{width:100%;box-sizing:border-box;height:56px;border:0;border-radius:99px;padding:0 54px 0 22px;font:500 var(--t-body) Rubik,sans-serif;color:var(--ink);background:#fff;box-shadow:0 2px 0 #00000010,0 10px 24px -8px #3a2a8a2e}
+.search input:focus{outline:3px solid var(--c);outline-offset:2px}
+.search .mag{position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:20px;pointer-events:none}
+.results{position:absolute;z-index:25;top:64px;left:0;right:0;background:#fff;border-radius:24px;box-shadow:0 30px 60px -20px #1e1b2e55;max-height:min(420px,55vh);overflow-y:auto;padding:8px;text-align:right}
+.results[hidden]{display:none}
+.res{all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:grid;grid-template-columns:40px minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;min-height:56px}
+.res:active{background:#0000000a}
+.res .e{font-size:24px;text-align:center}
+.res .a{font-weight:500;font-size:var(--t-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.res .b{font-size:var(--t-small);color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.res .pl{font-size:13px;color:var(--ink2);white-space:nowrap}
+.res.empty{cursor:default;grid-template-columns:1fr;color:var(--ink2);text-align:center}
 .kick{font-family:Karantina,sans-serif;font-size:clamp(28px,3vw,38px);letter-spacing:2px;color:var(--ink2);line-height:1}
 .lockup{display:inline-flex;align-items:flex-end;justify-content:center;gap:clamp(10px,1.6vw,22px);direction:rtl;margin-top:22px}
 .top h1{margin:0;font-family:Karantina,sans-serif;font-weight:700;font-size:clamp(120px,14vw,190px);line-height:.74;letter-spacing:-3px;color:var(--ink)}
@@ -26,9 +48,12 @@ button{font:inherit;color:inherit}
 .b13 .f{position:relative;background:linear-gradient(160deg,#ffb400 0%,#ff3fb4 48%,#7c4dff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
 @keyframes bob13{0%,100%{transform:rotate(-6deg) translateY(0)}50%{transform:rotate(-3deg) translateY(-6px)}}
 .top p{margin:18px auto 0;color:var(--ink2);font-size:16px;max-width:40ch}
-.chip{all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:99px;background:#fff;box-shadow:0 2px 0 #00000010,0 6px 16px #3a2a8a14;font-size:14px;color:var(--ink2)}
+.chip{all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:48px;box-sizing:border-box;padding:0 18px;border-radius:99px;background:#fff;box-shadow:0 2px 0 #00000010,0 6px 16px #3a2a8a14;font-size:14px;color:var(--ink2)}
 .chip i{width:10px;height:10px;border-radius:50%;background:#e24b4a}.chip.ok i{background:#1db954}
 
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.tile:focus-visible,.tr:focus-visible,.pbtn:focus-visible,.ib:focus-visible,.x:focus-visible,.chip:focus-visible,.res:focus-visible,.dev:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.full .ib:focus-visible,.full .x:focus-visible,.full .chip:focus-visible{outline-color:#fff}
 /* tiles */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:20px}
 .tile{all:unset;cursor:pointer;position:relative;aspect-ratio:1;border-radius:26px;overflow:hidden;background:linear-gradient(150deg,var(--pc),var(--pd));box-shadow:0 3px 0 #00000014,0 14px 30px -10px var(--pd);transition:transform .25s var(--ease),box-shadow .25s}
@@ -52,22 +77,23 @@ button{font:inherit;color:inherit}
 /* sheets (blurred backdrop) */
 .veil{position:fixed;inset:0;z-index:30;background:#1e1b2e33;backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);opacity:0;pointer-events:none;transition:opacity .3s}
 .veil.on{opacity:1;pointer-events:auto}
-.sheet{position:fixed;z-index:31;left:50%;top:50%;width:min(920px,92vw);height:min(720px,86vh);transform:translate(-50%,-46%) scale(.94);opacity:0;pointer-events:none;transition:all .4s var(--ease);background:#fff;border-radius:34px;box-shadow:0 40px 90px -20px #1e1b2e66;display:grid;grid-template-columns:300px minmax(0,1fr);overflow:hidden}
+.sheet{position:fixed;z-index:31;left:50%;top:50%;width:min(920px,92vw);height:min(720px,86vh);transform:translate(calc(-50% + var(--ox,0px)),calc(-50% + var(--oy,0px))) scale(.3);opacity:0;pointer-events:none;transition:all .4s var(--ease);background:#fff;border-radius:34px;box-shadow:0 40px 90px -20px #1e1b2e66;display:grid;grid-template-columns:300px minmax(0,1fr);overflow:hidden}
 .sheet.on{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
 .side{padding:72px 28px 28px;background:linear-gradient(170deg,var(--c),var(--d));color:#fff;display:flex;flex-direction:column;gap:14px}
 .cover{width:100%;aspect-ratio:1;border-radius:22px;background:#ffffff33 center/cover;box-shadow:0 18px 30px -12px #0007;display:flex;align-items:center;justify-content:center;font-size:90px}
 .side h2{margin:4px 0 0;font-family:Karantina,sans-serif;font-size:64px;font-weight:700;line-height:.84;letter-spacing:-.5px}
 .side .emo2{font-size:30px;display:block;margin-bottom:6px}
 .side .meta{color:#ffffffd9;font-size:14px;font-weight:500;letter-spacing:.3px;margin-top:10px;font-variant-numeric:tabular-nums}
-.btns{display:flex;gap:10px;margin-top:auto}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto}
+.btns #sPlay{grid-column:1/-1}
 .pbtn{all:unset;cursor:pointer;flex:1;text-align:center;padding:15px 10px;border-radius:18px;background:#fff;color:var(--d);font-weight:700;font-size:17px;transition:transform .12s}
-.pbtn.alt{background:#ffffff2a;color:#fff;flex:0 0 58px}
+.pbtn.alt{background:#ffffff2a;color:#fff;font-size:15px;font-weight:500;padding:13px 8px}
 .pbtn:active{transform:scale(.94)}
-.x{all:unset;cursor:pointer;position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#ffffffd9;color:var(--ink);box-shadow:0 4px 12px #0002;display:flex;align-items:center;justify-content:center;font-size:20px;z-index:2}
+.x{all:unset;cursor:pointer;position:absolute;top:16px;right:16px;width:48px;height:48px;border-radius:50%;background:#ffffffd9;color:var(--ink);box-shadow:0 4px 12px #0002;display:flex;align-items:center;justify-content:center;font-size:20px;z-index:2}
 .tracks{overflow-y:auto;padding:24px 18px 18px;display:flex;flex-direction:column;gap:2px}
 .tr{all:unset;cursor:pointer;display:grid;grid-template-columns:34px 50px minmax(0,1fr);align-items:center;gap:12px;padding:8px 10px;border-radius:16px;transition:background .2s}
 .tr:active{background:#0000000a}
-.tr .n{text-align:center;color:#b9b3cc;font-family:Karantina,sans-serif;font-size:30px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.tr .n{text-align:center;color:#6e6789;font-family:Karantina,sans-serif;font-size:30px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
 .tr .th{width:50px;height:50px;border-radius:10px;background:#eee center/cover}
 .tr .a,.tr .b{text-align:right}
 .tr .a{font-size:17px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -108,7 +134,8 @@ button{font:inherit;color:inherit}
 .rings span:nth-child(2){animation-delay:1.2s!important}.rings span:nth-child(3){animation-delay:2.4s!important}
 @keyframes ring{0%{transform:translate(-50%,-50%) scale(.6);opacity:.7}100%{transform:translate(-50%,-50%) scale(1.5);opacity:0}}
 .fwrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:22px;color:#fff;text-align:center;width:min(560px,90vw)}
-.full .cd{width:min(46vh,62vw);height:min(46vh,62vw)}
+.full .cd{width:min(46vh,62vw);height:min(46vh,62vw);transition:scale .5s var(--ease)}
+.full:not(.playing) .cd{scale:.9}
 .full .t1{font-family:Karantina,sans-serif;font-size:clamp(56px,7vw,92px);font-weight:700;line-height:.9;letter-spacing:-.5px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .full .t2{font-size:18px;font-weight:500;color:#ffffffd9;margin-top:-16px;letter-spacing:.3px}
 .full .pl{font-family:Karantina,sans-serif;font-size:30px;color:#ffffffb3;letter-spacing:.5px}
@@ -121,6 +148,15 @@ button{font:inherit;color:inherit}
 .ctrls .ib.main svg{width:40px;height:40px}
 .full .x{background:#ffffff26;color:#fff;top:max(20px,env(safe-area-inset-top));right:20px;left:auto;width:52px;height:52px;box-shadow:none}
 
+.dev{all:unset;cursor:pointer;box-sizing:border-box;display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 14px;min-height:64px;border-radius:18px;background:#f6f4fc}
+.dev .i{font-size:26px;text-align:center}.dev .n{font-weight:500;font-size:var(--t-body)}.dev .t{font-size:var(--t-small);color:var(--ink2)}
+.dev.on{background:linear-gradient(140deg,var(--c),var(--d));color:#fff}.dev.on .t{color:#ffffffd9}
+.upnext{font-size:16px;color:#ffffffd9;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upnext b{font-weight:500;color:#fff}
+.full .chip{position:absolute;top:max(20px,env(safe-area-inset-top));left:20px;background:#ffffff26;color:#fff;box-shadow:none}
+.tr.loading .n{animation:pulse .7s infinite alternate}
+@keyframes pulse{to{opacity:.3}}
+.conf{position:absolute;width:10px;height:14px;border-radius:2px;will-change:transform,opacity}
 .toast{position:fixed;bottom:120px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e1b2e;color:#fff;padding:14px 22px;border-radius:16px;font-size:16px;max-width:80vw;text-align:center;opacity:0;transition:all .35s var(--ease);z-index:60;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast a{color:#9ff5b8;pointer-events:auto}
@@ -134,9 +170,12 @@ button{font:inherit;color:inherit}
 </style>
 </head>
 <body>
+<div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
 <div class="app">
   <header class="top">
     <div class="kick">הפלייליסטים לבר המצווה של</div><div class="lockup"><h1>לירם</h1><div class="b13" aria-label="13"><span class="o" aria-hidden="true">13</span><span class="f">13</span></div></div><p>בוחרים קובייה, ונוגעים בשיר כדי לנגן אותו</p>
+    <div class="search" role="search"><span class="mag" aria-hidden="true">🔎</span><input id="q" type="search" placeholder="חיפוש שיר או זמר בכל הפלייליסטים" aria-label="חיפוש שיר" autocomplete="off" enterkeyhint="search"><div class="results" id="results" hidden role="listbox" aria-label="תוצאות חיפוש"></div></div>
+    <button class="chip dchip" id="dev1" type="button"><span aria-hidden="true">🔈</span><span class="dn">מאיפה לנגן?</span></button>
     <button class="chip" id="acct" type="button"><i></i><span>לא מחובר לספוטיפיי</span></button>
   </header>
   <main class="grid" id="grid"></main>
@@ -150,8 +189,8 @@ button{font:inherit;color:inherit}
     <div><h2 id="sName"></h2><div class="meta" id="sMeta"></div></div>
     <div class="btns">
       <button class="pbtn" id="sPlay" type="button">▶ ניגון</button>
-      <button class="pbtn alt" id="sShuf" type="button" aria-label="ניגון אקראי">🔀</button>
-      <a class="pbtn alt" id="sOpen" target="_blank" rel="noopener" aria-label="פתיחה בספוטיפיי" style="display:flex;align-items:center;justify-content:center">↗</a>
+      <button class="pbtn alt" id="sShuf" type="button">🔀 ערבוב</button>
+      <a class="pbtn alt" id="sOpen" target="_blank" rel="noopener">↗ בספוטיפיי</a>
     </div>
   </div>
   <div class="tracks" id="sList"></div>
@@ -168,11 +207,12 @@ button{font:inherit;color:inherit}
   <div class="bar"><b id="mBar"></b></div>
 </div>
 
-<section class="full" id="full" aria-label="נגן">
+<section class="full" id="full" role="dialog" aria-modal="true" aria-label="נגן">
   <div class="bgart" id="fBg"></div><div class="bgtint"></div>
   <div class="viz" id="viz"></div>
   <div class="rings"><span></span><span></span><span></span></div>
   <button class="x" id="fClose" type="button" aria-label="הקטנת הנגן">⌄</button>
+  <button class="chip" id="dev2" type="button"><span aria-hidden="true">🔈</span><span class="dn">מאיפה לנגן?</span></button>
   <div class="fwrap">
     <div class="cd" id="fCd"></div>
     <div class="t1" id="fT" dir="auto"></div>
@@ -183,10 +223,22 @@ button{font:inherit;color:inherit}
       <button class="ib main" data-a="toggle" type="button" aria-label="נגן או עצור" id="fPP"></button>
       <button class="ib" data-a="next" type="button" aria-label="שיר הבא"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM14.5 12 5 19V5z"/></svg></button>
     </div>
+    <div class="upnext" id="fNext" dir="auto"></div>
     <div class="pl" id="fPl"></div>
   </div>
 </section>
 
+<section class="sheet devs" id="devs" role="dialog" aria-modal="true" aria-labelledby="dvT" style="grid-template-columns:1fr;width:min(520px,92vw);height:auto;max-height:80vh">
+  <button class="x" id="dvClose" type="button" aria-label="סגירה">✕</button>
+  <div style="padding:30px 26px 24px;overflow-y:auto">
+    <h2 id="dvT" style="font-family:Karantina,sans-serif;font-size:var(--t-h1);line-height:.9;margin:0 0 6px;padding-right:56px">מאיפה לנגן?</h2>
+    <p style="margin:0 0 16px;color:var(--ink2);font-size:var(--t-body)">אלה המכשירים שבהם ספוטיפיי פתוח עכשיו. לא רואים מכשיר? פותחים בו את ספוטיפיי ומרעננים.</p>
+    <div id="dvList" style="display:flex;flex-direction:column;gap:8px"></div>
+    <button class="pbtn" id="dvRef" type="button" style="display:block;box-sizing:border-box;width:100%;margin-top:14px;background:#f1eff8;color:var(--ink)">↻ רענון הרשימה</button>
+  </div>
+</section>
+<div class="sr" id="live" aria-live="polite"></div>
+<div id="fx" aria-hidden="true" style="position:fixed;inset:0;pointer-events:none;z-index:80;overflow:hidden"></div>
 <div class="login" id="login" hidden><div class="card"><div style="font-size:64px">🎧</div><h2>מתחברים לספוטיפיי</h2><p>מתחברים פעם אחת, ואז כל שיר שבוחרים כאן מתנגן באפליקציית ספוטיפיי.</p><button class="go" id="loginBtn" type="button">התחברות לספוטיפיי</button><p style="margin:18px 0 0;font-size:14px"><button id="skip" type="button" style="all:unset;cursor:pointer;text-decoration:underline">להמשיך בלי חיבור</button></p></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -196,7 +248,7 @@ const REDIRECT=location.origin+location.pathname.replace(/index\.html$/,'');
 const SCOPES='user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative';
 const R=s=>s.split(';').map(x=>{const[a,b]=x.split('|');return{name:a,artist:b,uri:null,img:null}});
 const P=[
-{id:'0UBoW8BPXVTiJYJbQiGLlt',n:'הפלייליסט של לירם',e:'🎂',c:'#12b5cb',d:'#0a8597',s:R("Lady (Hear Me Tonight)|Modjo;יוצאת מן הכלל|ליעד מאיר, אופק אדנק;Show Me Love|Robin S;Gypsy Woman|Crystal Waters;טיל פצמר|ליעד מאיר;Music Sounds Better With You|Stardust;Finally|CeCe Peniston;מונולוג|סטילה, נס;The Days – NOTION Remix|Chrystal;Cola|CamelPhat, Elderbrook;שלוק מהבלו|ליעד מאיר;Miss You|Oliver Tree, Robin Schulz;Freed From Desire|Gala;באמפרים|סטילה, נס;Blinding Lights|The Weeknd;טן טן טן|אופק אדנק;Rhythm Is a Dancer|SNAP!;Sing It Back|Moloko;רוקד כל כך יפה|ליעד מאיר;meaningful love|Silo;The Rhythm Of The Night|Corona;מגדלים|סטילה, נס;Insomnia|Faithless;Be My Lover|La Bouche;שוטים|דודא, ליעד מאיר;Ride on Time|Black Box;Good Life|Inner City;רשימת קניות|סטילה, נס;Gonna Make You Sweat|C+C Music Factory;Snooze|SZA;מי כמוני|סטילה, נס;Pump Up The Jam|Technotronic;Big Fun|Inner City;תיק קטן|סטילה, נס;Show Me Love X Cola|Dorthy Kosmicki;What Is Love|Haddaway")},
+{id:'0UBoW8BPXVTiJYJbQiGLlt',n:'הפלייליסט של לירם',e:'🎂',c:'#12b5cb',d:'#0a8597',s:R("Lady (Hear Me Tonight)|Modjo;יוצאת מן הכלל|ליעד מאיר, אופק אדנק;Show Me Love|Robin S;Gypsy Woman|Crystal Waters;טיל פצמר|ליעד מאיר;Music Sounds Better With You|Stardust;Finally|CeCe Peniston;מונולוג|סטילה, נס;The Days – NOTION Remix|Chrystal;Cola|CamelPhat, Elderbrook;שלוק מהבלו|ליעד מאיר;Miss You|Oliver Tree, Robin Schulz;Freed From Desire|Gala;באמפרים|סטילה, נס;Blinding Lights|The Weeknd;טן טן טן|אופק אדנק;Rhythm Is a Dancer|SNAP!;Sing It Back|Moloko;רוקד כל כך יפה|ליעד מאיר;meaningful love|Silo;The Rhythm Of The Night|Corona;מגדלים|סטילה, נס;Insomnia|Faithless;Be My Lover|La Bouche;שוטים|דודא, ליעד מאיר;Ride on Time|Black Box;Good Life|Inner City;רשימת קניות|סטילה, נס;Gonna Make You Sweat|C+C Music Factory;Snooze|SZA;מי כמוני|סטילה, נס;Pump Up The Jam|Technotronic;Big Fun|Inner City;תיק קטן|סטילה, נס;Show Me Love X Cola|Dorthy Kosmicki;What Is Love|Haddaway;Losing It|FISHER;Where You Are|John Summit, HAYLA;B.O.T.A.|Eliza Rose;Afraid To Feel|LF SYSTEM;Rhyme Dust|MK, Dom Dolla;Piece Of Your Heart|MEDUZA;Lose Control|MEDUZA, Becky Hill;Baianá|Bakermat;Turn On The Lights again..|Fred again.., Swedish House Mafia;Miracle|Calvin Harris, Ellie Goulding;One More Time|Daft Punk;Your Love (9PM)|ATB, Topic;Saving Up|Dom Dolla;Desire|Calvin Harris, Sam Smith")},
 {id:'1FVyIkNBOjedFHWLNrkYZs',n:'בוקר טוב, בר מצווה',e:'☀️',c:'#f5b700',d:'#c98f00',s:R("Here Comes The Sun|The Beatles;אני ואתה|אריק איינשטיין;What A Wonderful World|Louis Armstrong;עוף גוזל|אריק איינשטיין;Three Little Birds|Bob Marley;ירח|שלמה ארצי;Better Together|Jack Johnson;סע לאט|אריק איינשטיין;You've Got a Friend|James Taylor;עטור מצחך|אריק איינשטיין;Banana Pancakes|Jack Johnson;בואי|עידן רייכל;Lovely Day|Bill Withers;ממעמקים|עידן רייכל;Lean on Me|Bill Withers;פסק זמן|אריק איינשטיין;Stand By Me|Ben E. King;יש בי אהבה|אריק איינשטיין;Put Your Records On|Corinne Bailey Rae;גן סגור|גידי גוב;Thinking out Loud|Ed Sheeran;Perfect|Ed Sheeran;אהבתיה|שלמה ארצי;Sunny|Bobby Hebb;ואולי|אריק איינשטיין;Riptide|Vance Joy;כשאת בוכה את לא יפה|אריק איינשטיין;I'm Yours|Jason Mraz;אוהב להיות בבית|אריק איינשטיין;Home|Edward Sharpe;ברית עולם|מתי כספי;Brown Eyed Girl|Van Morrison;יהיה טוב|דויד ברוזה;Don't Worry Be Happy|Bobby McFerrin;יושב על הגדר|אריק איינשטיין;Sweet Caroline|Neil Diamond;גבר הולך לאיבוד|שלמה ארצי;Walking On Sunshine|Katrina & The Waves;שיר המכולת|כוורת;רדיו חזק|תיסלם;יו יה|כוורת;נתתי לה חיי|כוורת;גוליית|כוורת")},
 {id:'33kVEsOSw7EhgpKBnRwtHW',n:'מקשטים בצ׳יל',e:'🎈',c:'#ff5f8f',d:'#d23b6c',s:R("המבט בעיניך|אגם בוחבוט;תמיד רציתי עוד|נועם בתן;אביר על סוס לבן|שירה זלוף;03|איתי לוי;עשר רמות מעליו|אודיה;מדליקה לי הכל|עדן חסון;Just the Way You Are|Bruno Mars;Treasure|Bruno Mars;אבי הטחול|רואי אדם;מלכת הדור|עומר אדם;נתתי לך בית|אופק אדנק;Shape of You|Ed Sheeran;תן לי את האששש|יסמין מועלם;שני משוגעים|עומר אדם;את חסרה לי|עדן חסון;Sugar|Maroon 5;לאב סונג|נועה קירל;רק שלך|עומר אדם;יוצאת מן הכלל|אופק אדנק;Don't Start Now|Dua Lipa;תהיה בנאדם|מתן חסן;צ'יק צ'ק|סטטיק;עד שתבואי עד אליי|עדן חסון;As It Was|Harry Styles;רחוק מכולם|עומר אדם;נאדי באדי|אגם בוחבוט;להציל אותי|יסמין מועלם;Photograph|Ed Sheeran;בריידזילה|נועה קירל;לילות וקללות|עומר אדם;Kawaii|סטטיק;Locked Out of Heaven|Bruno Mars;רולקס וקסקט|עדן בן זקן;טן טן טן|אופק אדנק;לא מעניין אותי|עדן חסון;Levitating|Dua Lipa;יחפים|יסמין מועלם;אני חוזר|מתן חסן;אם אתה גבר|נועה קירל;Castle on the Hill|Ed Sheeran;בא לה לרקוד|סטטיק;Watermelon Sugar|Harry Styles;Dance the Night|Dua Lipa")},
 {id:'7wF5NwxDqFnsL9ZdiK9Ghn',n:'קלאסיקות שכולם שרים',e:'🎸',c:'#ff7a3d',d:'#d35a20',s:R("Sir Duke|Stevie Wonder;רכבת לילה לקהיר|משינה;Take On Me|a-ha;שירת הסטיקר|הדג נחש;September|Earth, Wind & Fire;א-בא-ני-בי|יזהר כהן;Dancing Queen|ABBA;יש לך אותי|תיסלם;Girls Just Want to Have Fun|Cyndi Lauper;I Wanna Dance with Somebody|Whitney Houston;היא לא יודעת מה עובר עליי|שלמה ארצי;Superstition|Stevie Wonder;Happy|Pharrell Williams;חללית|גזוז;Can't Stop the Feeling|Justin Timberlake;אין מקום אחר|משינה;I Gotta Feeling|Black Eyed Peas;Golden Boy|נדב גדג';Uptown Funk|Mark Ronson, Bruno Mars;תנו לי רוקנ'רול|תיסלם;Billie Jean|Michael Jackson;Beat It|Michael Jackson;זמן להתעורר|הדג נחש;Another One Bites the Dust|Queen;Unicorn|נועה קירל;Don't Stop Me Now|Queen;Hakol Beseder – Remix|יהודית רביץ;Africa|Toto;Michelle|נועם בתן;Mr. Blue Sky|ELO;נצמדנו|שלמה ארצי;Wake Me Up Before You Go-Go|Wham!;היא לא תדע|גזוז;Livin' on a Prayer|Bon Jovi;שלח לי מלאך|משינה;Mamma Mia|ABBA;ארץ חדשה|שלמה ארצי;לזוז|הדג נחש;עוד פגישה|תיסלם;Toy|Netta;Diva|דנה אינטרנשיונל;הללויה|חלב ודבש")},
@@ -213,7 +265,8 @@ const store={get:k=>{try{return ls.getItem(k)}catch(e){return null}},set:(k,v)=>
 const PLAY='<svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>',PAUSE='<svg viewBox="0 0 24 24"><path d="M6 4h4.5v16H6zM13.5 4H18v16h-4.5z"/></svg>';
 const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function toast(h,ms=4000){const t=$('toast');t.innerHTML=h;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),ms)}
-let ac=null;function tick(f=1500){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;g.gain.setValueAtTime(.04,ac.currentTime);g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.05);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+.06)}catch(e){}}
+function tick(){}
+let ac=null;function _tickUnused(f=1500){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;g.gain.setValueAtTime(.04,ac.currentTime);g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.05);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+.06)}catch(e){}}
 function setTheme(p){document.documentElement.style.setProperty('--c',p.c);document.documentElement.style.setProperty('--d',p.d)}
 
 /* ---------- state ---------- */
@@ -223,20 +276,25 @@ let open=-1, playCtx=null, playIdx=-1, playing=false, progMs=0, durMs=0, lastSyn
 const grid=$('grid');
 P.forEach((p,i)=>{const b=document.createElement('button');b.type='button';b.className='tile'+(i===0?' mine':'');b.style.setProperty('--pc',p.c);b.style.setProperty('--pd',p.d);
   b.innerHTML=`<div class="art"></div><div class="shade"></div><div class="emo" aria-hidden="true">${p.e}</div><div class="eqm" aria-hidden="true"><i></i><i></i><i></i></div><div class="nm">${esc(p.n)}</div><div class="ct">${p.s.length} שירים</div>`;
-  b.onclick=()=>openSheet(i);grid.appendChild(b);p.el=b});
+  b.onclick=()=>openSheet(i,b);grid.appendChild(b);p.el=b});
 function paintTiles(){P.forEach(p=>{const a=p.el.querySelector('.art');if(p.cover&&!a.classList.contains('on')){a.style.backgroundImage=`url("${p.cover}")`;a.classList.add('on')}
   p.el.querySelector('.ct').textContent=p.s.length+' שירים';p.el.classList.toggle('live',playCtx===p.id&&playing)})}
 
 /* ---------- playlist sheet ---------- */
-function openSheet(i){open=i;const p=P[i];setTheme(p);tick(1300);
+let lastFocus=null,fromTile=null;
+function setInert(){const sheetOn=$('sheet').classList.contains('on')||$('devs').classList.contains('on'),fullOn=$('full').classList.contains('on');
+  document.querySelector('.app').inert=sheetOn||fullOn;$('mini').inert=fullOn||$('devs').classList.contains('on');$('sheet').inert=fullOn||!$('sheet').classList.contains('on');
+  document.body.style.overflow=sheetOn||fullOn?'hidden':''}
+function originFrom(el){const sh=$('sheet');if(!el){sh.style.setProperty('--ox','0px');sh.style.setProperty('--oy','0px');return}const r=el.getBoundingClientRect();sh.style.setProperty('--ox',(r.left+r.width/2-innerWidth/2)+'px');sh.style.setProperty('--oy',(r.top+r.height/2-innerHeight/2)+'px')}
+function openSheet(i,el){open=i;const p=P[i];setTheme(p);lastFocus=document.activeElement;fromTile=el||null;originFrom(fromTile);
   $('sCover').style.backgroundImage=p.cover?`url("${p.cover}")`:'';$('sCover').textContent=p.cover?'':p.e;
   $('sName').innerHTML=(p.cover?'<span class="emo2">'+p.e+'</span>':'')+esc(p.n);$('sMeta').textContent=p.s.length+' שירים'+(mins(p)?'  ·  '+mins(p):'');$('sOpen').href='https://open.spotify.com/playlist/'+p.id;
-  renderList();$('veil').classList.add('on');$('sheet').classList.add('on');
+  renderList();$('veil').classList.add('on');requestAnimationFrame(()=>{$('sheet').classList.add('on');setInert();setTimeout(()=>$('sClose').focus({preventScroll:true}),60)});
   const c=$('sList').querySelector('.cur');if(c)c.scrollIntoView({block:'center'});else $('sList').scrollTop=0}
 function mins(p){const ms=p.s.reduce((a,s)=>a+(s.ms||0),0);return ms?Math.round(ms/60000)+' דקות':''}
-function closeSheet(){open=-1;$('veil').classList.remove('on');$('sheet').classList.remove('on')}
+function closeSheet(){if(open<0)return;open=-1;originFrom(fromTile);$('veil').classList.remove('on');$('sheet').classList.remove('on');setInert();if(lastFocus&&lastFocus.focus)lastFocus.focus({preventScroll:true})}
 function renderList(){if(open<0)return;const p=P[open];const isCtx=playCtx===p.id;
-  $('sList').innerHTML=p.s.map((s,i)=>`<button class="tr${isCtx&&i===playIdx?' cur':''}" data-i="${i}" type="button"><span class="n">${isCtx&&i===playIdx&&playing?'♪':i+1}</span><span class="th" style="${s.img?`background-image:url('${s.img}')`:`background:linear-gradient(140deg,${p.c},${p.d})`}"></span><span style="min-width:0"><div class="a" dir="auto">${esc(s.name)}</div><div class="b" dir="auto">${esc(s.artist)}</div></span></button>`).join('');
+  $('sList').innerHTML=p.s.map((s,i)=>`<button class="tr${isCtx&&i===playIdx?' cur':''}${isCtx&&i===playIdx&&starting?' loading':''}" data-i="${i}" type="button" aria-label="${esc(s.name)}, ${esc(s.artist)}${isCtx&&i===playIdx?(playing?' – מתנגן':' – מושהה'):''}"><span class="n" aria-hidden="true">${isCtx&&i===playIdx?(starting?'…':(playing?'♪':i+1)):i+1}</span><span class="th" style="${s.img?`background-image:url('${s.img}')`:`background:linear-gradient(140deg,${p.c},${p.d})`}"></span><span style="min-width:0"><div class="a" dir="auto">${esc(s.name)}</div><div class="b" dir="auto">${esc(s.artist)}</div></span></button>`).join('');
   $('sPlay').innerHTML=isCtx&&playing?'❚❚ השהיה':'▶ ניגון'}
 $('sList').onclick=e=>{const b=e.target.closest('[data-i]');if(b)playAt(open,+b.dataset.i)};
 $('sPlay').onclick=()=>{const p=P[open];if(playCtx===p.id)toggle();else playAt(open,0)};
@@ -251,15 +309,17 @@ function renderPlayer(){
   ['mCd','fCd'].forEach(id=>{$(id).style.backgroundImage=img?`url("${img}")`:`linear-gradient(140deg,${p.c},${p.d})`});
   $('fBg').style.backgroundImage=img?`url("${img}")`:'';
   $('mT').textContent=$('fT').textContent=s.name||'';$('mA').textContent=$('fA').textContent=s.artist||'';
-  $('fPl').textContent=p.e+' '+p.n;$('mPP').innerHTML=$('fPP').innerHTML=playing?PAUSE:PLAY;
+  $('fPl').textContent=p.e+' '+p.n;
+  const nx=p.s[playIdx+1];$('fNext').innerHTML=nx?'הבא בתור: <b>'+esc(nx.name)+'</b> · '+esc(nx.artist):'';document.body.classList.toggle('live',playing);$('mPP').innerHTML=$('fPP').innerHTML=playing?PAUSE:PLAY;
   $('mini').classList.toggle('playing',playing);$('full').classList.toggle('playing',playing);
 }
 function render(){paintTiles();renderList();renderPlayer()}
 $('mini').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b){e.stopPropagation();act(b.dataset.a);return}openFull()});
 $('mini').addEventListener('keydown',e=>{if(e.key==='Enter')openFull()});
 $('full').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b)act(b.dataset.a)});
-function openFull(){const t=curTrack();if(t)setTheme(t.p);$('full').classList.add('on');tick(1100)}
-$('fClose').onclick=()=>$('full').classList.remove('on');
+let fullFrom=null;function openFull(){const t=curTrack();if(t)setTheme(t.p);fullFrom=document.activeElement;$('full').classList.add('on');setInert();setTimeout(()=>$('fClose').focus({preventScroll:true}),60)}
+function closeFull(){$('full').classList.remove('on');setInert();if(fullFrom&&fullFrom.focus)fullFrom.focus({preventScroll:true})}
+$('fClose').onclick=closeFull;
 function act(a){tick(a==='next'?2000:a==='prev'?1600:900);if(a==='toggle')toggle();else if(a==='next')skip(1);else if(a==='prev')skip(-1)}
 
 /* background visualizer */
@@ -271,12 +331,16 @@ setInterval(()=>{const ms=progMs+(playing?Date.now()-lastSync:0);const w=durMs?M
 
 /* ---------- playback ---------- */
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let starting=false;
 async function playAt(pi,i){
-  const p=P[pi];if(!token()){const s=p.s[i];toast('כדי לנגן מכאן צריך להתחבר לספוטיפיי. <a target="_blank" rel="noopener" href="'+(s&&s.uri?'https://open.spotify.com/track/'+s.uri.split(':').pop():'https://open.spotify.com/playlist/'+p.id)+'">פתיחה בספוטיפיי</a>',6000);return}
+  closeResults();const p=P[pi];if(!token()){const s=p.s[i];toast('כדי לנגן מכאן צריך להתחבר לספוטיפיי. <a target="_blank" rel="noopener" href="'+(s&&s.uri?'https://open.spotify.com/track/'+s.uri.split(':').pop():'https://open.spotify.com/playlist/'+p.id)+'">פתיחה בספוטיפיי</a>',6000);return}
+  const prev={playCtx,playIdx,nowItem,playing};
+  starting=true;playCtx=p.id;playIdx=i;nowItem=p.s[i];playing=true;progMs=0;durMs=p.s[i]&&p.s[i].ms||0;lastSync=Date.now();render();
   const body={context_uri:'spotify:playlist:'+p.id,offset:{position:i},position_ms:0};
   const r=await withDevice(dev=>api('PUT','/me/player/play'+(dev?'?device_id='+dev:''),body,true));
-  if(r!==true){if(r==='nodevice'){pending={ctx:p.id,idx:i};wakeSpotify(p,i)}else toast('ספוטיפיי לא הצליח לנגן. נסו שוב.');return}
-  pending=null;playCtx=p.id;playIdx=i;nowItem=p.s[i];playing=true;progMs=0;durMs=p.s[i]&&p.s[i].ms||0;lastSync=Date.now();render();wake();soon();
+  starting=false;
+  if(r!==true){({playCtx,playIdx,nowItem,playing}=prev);render();if(r==='nodevice'){pending={ctx:p.id,idx:i};wakeSpotify(p,i)}else toast('ספוטיפיי לא הצליח לנגן. נסו שוב.');return}
+  pending=null;lastSync=Date.now();render();wake();soon();celebrate();announce();
 }
 async function toggle(){
   if(!playCtx)return;
@@ -291,7 +355,9 @@ async function skip(d){
   else playAt(pi,Math.max(0,Math.min(P[pi].s.length-1,playIdx+d)));
 }
 async function withDevice(call){
-  let r=await call(null);if(r!=='nodevice')return r;
+  const pref=store.get('sp_pref');let r;
+  if(pref){r=await call(pref);if(r!=='nodevice'&&r!==false)return r}
+  r=await call(null);if(r!=='nodevice')return r;
   const saved=store.get('sp_dev');
   if(saved){await api('PUT','/me/player',{device_ids:[saved],play:false},true);await sleep(500);r=await call(saved);if(r!=='nodevice'&&r!==false)return r}
   const dv=await api('GET','/me/player/devices');const d=dv&&dv.devices&&(dv.devices.find(x=>x.is_active)||dv.devices[0]);
@@ -305,6 +371,12 @@ async function retryPending(){if(!pending||!token())return;const want=pending;
     const r=await withDevice(dev=>api('PUT','/me/player/play'+(dev?'?device_id='+dev:''),body,true));
     if(r===true){pending=null;playCtx=want.ctx;playIdx=want.idx;nowItem=P[pi].s[want.idx];playing=true;lastSync=Date.now();toast('מנגן ✓',1800);render();soon();return}}}
 
+function announce(){const t=curTrack();if(t)$('live').textContent='מתנגן: '+(t.s.name||'')+', '+(t.s.artist||'')}
+function celebrate(){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const fx=$('fx');const src=($('full').classList.contains('on')?$('fCd'):$('mCd')).getBoundingClientRect();
+  const cx=src.left+src.width/2,cy=src.top+src.height/2,cols=[getComputedStyle(document.documentElement).getPropertyValue('--c'),'#ffb400','#ff3fb4','#00c2a8','#ffffff'];
+  for(let k=0;k<28;k++){const d=document.createElement('i');d.className='conf';d.style.background=cols[k%cols.length];d.style.left=cx+'px';d.style.top=cy+'px';fx.appendChild(d);
+    const a=Math.random()*Math.PI*2,v=120+Math.random()*220,dx=Math.cos(a)*v,dy=Math.sin(a)*v-160;
+    d.animate([{transform:'translate(-50%,-50%) rotate(0)',opacity:1},{transform:`translate(${dx}px,${dy+260}px) rotate(${Math.random()*720}deg)`,opacity:0}],{duration:1100+Math.random()*500,easing:'cubic-bezier(.2,.7,.4,1)'}).onfinish=()=>d.remove()}}
 /* sync */
 let syncT=null;function soon(){clearTimeout(syncT);syncT=setTimeout(sync,900)}
 async function sync(){if(!token())return;const r=await api('GET','/me/player');
@@ -351,9 +423,37 @@ async function loadPlaylists(){
 function setAcct(){const ok=!!token();$('acct').classList.toggle('ok',ok);$('acct').querySelector('span').textContent=ok?'מחובר לספוטיפיי':'לא מחובר לספוטיפיי'}
 $('acct').onclick=()=>{if(!token())$('login').hidden=false};
 $('loginBtn').onclick=login;$('skip').onclick=()=>{$('login').hidden=true;store.set('sp_skip','1')};
-addEventListener('keydown',e=>{if(e.key==='Escape'){if($('full').classList.contains('on'))$('full').classList.remove('on');else closeSheet()}});
+addEventListener('keydown',e=>{if(e.key==='Escape'){if($('devs').classList.contains('on'))closeDevs();else if($('full').classList.contains('on'))closeFull();else closeSheet()}});
 
-(async()=>{render();await handleRedirect();setAcct();if(token())loadPlaylists();else if(!store.get('sp_skip'))$('login').hidden=false})();
+/* ---------- device picker ---------- */
+const DIC={Computer:'💻',Smartphone:'📱',Tablet:'📲',Speaker:'🔊',TV:'📺',CastAudio:'🔊',AVR:'🔊',Automobile:'🚗'};
+function devName(){return store.get('sp_prefName')||'מאיפה לנגן?'}
+function paintDevChips(){document.querySelectorAll('.dn').forEach(e=>e.textContent=devName())}
+let devFrom=null;
+async function openDevs(){if(!token()){$('login').hidden=false;return}devFrom=document.activeElement;$('veil').classList.add('on');originFrom(null);$('devs').classList.add('on');setInert();setTimeout(()=>$('dvClose').focus({preventScroll:true}),60);await loadDevs()}
+function closeDevs(){$('devs').classList.remove('on');if(!$('sheet').classList.contains('on'))$('veil').classList.remove('on');setInert();if(devFrom&&devFrom.focus)devFrom.focus({preventScroll:true})}
+async function loadDevs(){const L=$('dvList');L.innerHTML='<div style="color:var(--ink2);padding:10px">טוען…</div>';
+  const r=await api('GET','/me/player/devices');const ds=(r&&r.devices)||[];const pref=store.get('sp_pref');
+  if(!ds.length){L.innerHTML='<div style="color:var(--ink2);padding:10px;line-height:1.6">לא נמצא מכשיר. פותחים את ספוטיפיי במחשב, בטלפון או באייפד, ואז לוחצים על רענון.</div>';return}
+  L.innerHTML=ds.map(d=>`<button class="dev${(pref?d.id===pref:d.is_active)?' on':''}" type="button" data-id="${esc(d.id)}" data-n="${esc(d.name)}"><span class="i" aria-hidden="true">${DIC[d.type]||'🎵'}</span><span><div class="n">${esc(d.name)}</div><div class="t">${d.is_active?'מנגן עכשיו':'מוכן'}</div></span><span aria-hidden="true">${(pref?d.id===pref:d.is_active)?'✓':''}</span></button>`).join('')}
+$('dvList').onclick=async e=>{const b=e.target.closest('[data-id]');if(!b)return;store.set('sp_pref',b.dataset.id);store.set('sp_prefName',b.dataset.n);store.set('sp_dev',b.dataset.id);paintDevChips();
+  await api('PUT','/me/player',{device_ids:[b.dataset.id],play:!!playing},true);toast('מנגנים מ: '+esc(b.dataset.n),2200);closeDevs();soon()};
+$('dvRef').onclick=loadDevs;$('dvClose').onclick=closeDevs;$('dev1').onclick=openDevs;$('dev2').onclick=openDevs;
+
+/* ---------- search ---------- */
+const nrm=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0591-\u05C7\u0300-\u036f]/g,'').replace(/[^a-z0-9\u05d0-\u05ea ]/g,' ').replace(/\s+/g,' ').trim();
+const Q=$('q'),RES=$('results');
+function closeResults(){RES.hidden=true}
+function doSearch(){const q=nrm(Q.value);if(!q){closeResults();return}const out=[];
+  P.forEach((p,pi)=>p.s.forEach((s,i)=>{const h=nrm(s.name+' '+s.artist);if(h.includes(q))out.push({pi,i,p,s,score:nrm(s.name).startsWith(q)?0:1})}));
+  out.sort((a,b)=>a.score-b.score);
+  RES.innerHTML=out.length?out.slice(0,40).map(o=>`<button class="res" type="button" role="option" data-pi="${o.pi}" data-i="${o.i}"><span class="e" aria-hidden="true">${o.p.e}</span><span style="min-width:0"><div class="a" dir="auto">${esc(o.s.name)}</div><div class="b" dir="auto">${esc(o.s.artist)}</div></span><span class="pl">${esc(o.p.n)}</span></button>`).join(''):'<div class="res empty">לא נמצא שיר כזה. נסו מילה אחרת או שם של זמר.</div>';
+  RES.hidden=false}
+Q.addEventListener('input',doSearch);Q.addEventListener('focus',()=>{if(Q.value)doSearch()});
+RES.addEventListener('click',e=>{const b=e.target.closest('[data-pi]');if(!b)return;Q.blur();playAt(+b.dataset.pi,+b.dataset.i)});
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('.search'))closeResults()});
+
+(async()=>{paintDevChips();render();await handleRedirect();setAcct();if(token())loadPlaylists();else if(!store.get('sp_skip'))$('login').hidden=false})();
 </script>
 </body>
 </html>
