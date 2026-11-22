@@ -169,7 +169,8 @@ body.live .blobs i{opacity:.24}
 .qi .a{font-weight:500;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
 .qi .b{font-size:13px;color:#ffffffb3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
 .qi.now{background:#ffffff26}
-.qrow{display:grid;grid-template-columns:minmax(0,1fr) 48px;align-items:center;border-radius:16px;touch-action:pan-y}
+.qrow{display:grid;grid-template-columns:minmax(0,1fr) 48px;align-items:center;border-radius:16px;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.qrow.dragging{touch-action:none}
 .qrow.dragging{background:#ffffff2e;box-shadow:0 14px 30px -10px #000a;scale:1.03;z-index:2;position:relative}
 .qrow.saving{opacity:.6}
 .grip{all:unset;cursor:grab;width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:12px;color:#ffffffb3;font-size:22px;touch-action:none}
@@ -377,18 +378,31 @@ async function applyOrder(){const t=curTrack();if(!t||!custom||custom.id!==t.p.i
   if(r===true){playing=true;lastSync=Date.now();progMs=ms;render();soon()}else toast('לא הצלחתי לעדכן את סדר ההשמעה. נסו שוב.')}
 $('qList').addEventListener('keydown',e=>{const g=e.target.closest('.grip');if(!g)return;const i=+g.dataset.g;
   if(e.key==='ArrowUp'){e.preventDefault();moveTrack(i,i-1)}else if(e.key==='ArrowDown'){e.preventDefault();moveTrack(i,i+1)}});
-$('qList').addEventListener('pointerdown',e=>{const g=e.target.closest('.grip');if(!g)return;e.preventDefault();e.stopPropagation();
-  const row=g.closest('.qrow'),list=$('qList'),from=+row.dataset.pos;row.classList.add('dragging');try{g.setPointerCapture(e.pointerId)}catch(_){}
-  let lastY=e.clientY;const scroller=setInterval(()=>{const r=list.getBoundingClientRect();if(lastY<r.top+50)list.scrollTop-=10;else if(lastY>r.bottom-50)list.scrollTop+=10},16);
-  const mv=ev=>{lastY=ev.clientY;const rows=[...list.querySelectorAll('.qrow')].filter(r=>r!==row&&!r.querySelector('.now'));
+/* drag: grip starts at once; the row itself starts after a small move with a mouse, or a long press on touch */
+let suppressClick=false;
+$('qList').addEventListener('pointerdown',e=>{
+  const row=e.target.closest('.qrow');if(!row||row.querySelector('.now'))return;
+  const list=$('qList'),onGrip=!!e.target.closest('.grip'),touch=e.pointerType!=='mouse';
+  const sx=e.clientX,sy=e.clientY;let dragging=false,lastY=sy,scroller=null,lp=null;
+  const start=()=>{if(dragging)return;dragging=true;suppressClick=true;row.classList.add('dragging');
+    scroller=setInterval(()=>{const r=list.getBoundingClientRect();if(lastY<r.top+50)list.scrollTop-=10;else if(lastY>r.bottom-50)list.scrollTop+=10},16)};
+  if(onGrip){e.preventDefault();start()}else if(touch){lp=setTimeout(start,320)}
+  const mv=ev=>{lastY=ev.clientY;
+    if(!dragging){const d=Math.hypot(ev.clientX-sx,ev.clientY-sy);if(touch){if(d>10)cleanup(false)}else if(d>6)start();if(!dragging)return}
+    ev.preventDefault();
+    const rows=[...list.querySelectorAll('.qrow')].filter(r=>r!==row&&!r.querySelector('.now'));
     for(const r of rows){const b=r.getBoundingClientRect();if(ev.clientY>b.top&&ev.clientY<b.bottom){if(ev.clientY<b.top+b.height/2)list.insertBefore(row,r);else list.insertBefore(row,r.nextSibling);break}}};
-  const up=()=>{clearInterval(scroller);removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);row.classList.remove('dragging');
-    const order=[...list.querySelectorAll('.qrow')];const to=+order[0].dataset.pos+order.indexOf(row);moveTrack(from,to)};
-  addEventListener('pointermove',mv);addEventListener('pointerup',up);addEventListener('pointercancel',up)});
+  const cleanup=commit=>{clearTimeout(lp);clearInterval(scroller);removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',cancel);
+    row.classList.remove('dragging');
+    if(commit&&dragging){const order=[...list.querySelectorAll('.qrow')];const from=+row.dataset.pos,to=+order[0].dataset.pos+order.indexOf(row);if(from===to)renderQueue();else moveTrack(from,to)}
+    setTimeout(()=>{suppressClick=false},0)};
+  const up=()=>cleanup(true),cancel=()=>{if(dragging)renderQueue();cleanup(false)};
+  addEventListener('pointermove',mv,{passive:false});addEventListener('pointerup',up);addEventListener('pointercancel',cancel)});
+$('qList').addEventListener('contextmenu',e=>{if(e.target.closest('.qrow'))e.preventDefault()});
 function toggleQueue(on){const f=$('full');on=on===undefined?!f.classList.contains('q'):on;f.classList.toggle('q',on);$('qOpen').setAttribute('aria-expanded',on);$('qpanel').inert=!on;if(on){renderQueue();setTimeout(()=>{const n=$('qList').querySelector('.now');(n||$('qClose')).focus({preventScroll:true})},80)}else $('qOpen').focus({preventScroll:true})}
 $('qOpen').addEventListener('click',e=>{e.stopPropagation();toggleQueue()});
 $('qClose').addEventListener('click',e=>{e.stopPropagation();toggleQueue(false)});
-$('qList').addEventListener('click',async e=>{e.stopPropagation();const b=e.target.closest('[data-i]');if(!b)return;const t=curTrack();if(!t)return;const i=+b.dataset.i;
+$('qList').addEventListener('click',async e=>{e.stopPropagation();if(suppressClick){suppressClick=false;return}const b=e.target.closest('[data-i]');if(!b)return;const t=curTrack();if(!t)return;const i=+b.dataset.i;
   if(custom&&custom.id===t.p.id&&token()){const ord=custom.order,pos=ord.indexOf(i);const uris=ord.slice(pos).map(k=>t.p.s[k].uri).filter(Boolean);
     starting=true;playIdx=i;nowItem=t.p.s[i];playing=true;progMs=0;lastSync=Date.now();render();
     const r=await withDevice(dev=>api('PUT','/me/player/play'+(dev?'?device_id='+dev:''),{uris,position_ms:0},true));starting=false;
