@@ -52,6 +52,7 @@ button{font:inherit;color:inherit}
 .scr-in{height:100%;border-radius:calc(var(--h)*.014);background:var(--screen);color:#fff;padding:7% 8%;display:flex;flex-direction:column;gap:4px;overflow:hidden}
 .st{font-size:calc(var(--h)*.027);color:var(--pc);display:flex;justify-content:space-between}
 .pn{font-size:calc(var(--h)*.036);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tn,.an{text-align:right}
 .tn{font-size:calc(var(--h)*.042);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4%}
 .an{font-size:calc(var(--h)*.028);color:#aab0c0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bar{height:5px;background:#ffffff22;border-radius:3px;overflow:hidden;margin-top:auto}
@@ -167,6 +168,7 @@ const SCOPES='user-read-playback-state user-modify-playback-state user-read-curr
 const R=s=>s.split(';').map(x=>{const[a,b]=x.split('|');return{name:a,artist:b,uri:null}});
 
 const P=[
+{id:'0UBoW8BPXVTiJYJbQiGLlt',n:'הפלייליסט של לירם',e:'🎂',c:'#12b5cb',d:'#0a8597',s:R("Lady (Hear Me Tonight)|Modjo;יוצאת מן הכלל|ליעד מאיר, אופק אדנק;Show Me Love|Robin S;Gypsy Woman|Crystal Waters;טיל פצמר|ליעד מאיר;Music Sounds Better With You|Stardust;Finally|CeCe Peniston;מונולוג|סטילה, נס;The Days – NOTION Remix|Chrystal;Cola|CamelPhat, Elderbrook;שלוק מהבלו|ליעד מאיר;Miss You|Oliver Tree, Robin Schulz;Freed From Desire|Gala;באמפרים|סטילה, נס;Blinding Lights|The Weeknd;טן טן טן|אופק אדנק;Rhythm Is a Dancer|SNAP!;Sing It Back|Moloko;רוקד כל כך יפה|ליעד מאיר;meaningful love|Silo;The Rhythm Of The Night|Corona;מגדלים|סטילה, נס;Insomnia|Faithless;Be My Lover|La Bouche;שוטים|דודא, ליעד מאיר;Ride on Time|Black Box;Good Life|Inner City;רשימת קניות|סטילה, נס;Gonna Make You Sweat|C+C Music Factory;Snooze|SZA;מי כמוני|סטילה, נס;Pump Up The Jam|Technotronic;Big Fun|Inner City;תיק קטן|סטילה, נס;Show Me Love X Cola|Dorthy Kosmicki;What Is Love|Haddaway")},
 {id:'1FVyIkNBOjedFHWLNrkYZs',n:'בוקר טוב, בר מצווה',e:'☀️',c:'#f5b700',d:'#c98f00',s:R("Here Comes The Sun|The Beatles;אני ואתה|אריק איינשטיין;What A Wonderful World|Louis Armstrong;עוף גוזל|אריק איינשטיין;Three Little Birds|Bob Marley;ירח|שלמה ארצי;Better Together|Jack Johnson;סע לאט|אריק איינשטיין;You've Got a Friend|James Taylor;עטור מצחך|אריק איינשטיין;Banana Pancakes|Jack Johnson;בואי|עידן רייכל;Lovely Day|Bill Withers;ממעמקים|עידן רייכל;Lean on Me|Bill Withers;פסק זמן|אריק איינשטיין;Stand By Me|Ben E. King;יש בי אהבה|אריק איינשטיין;Put Your Records On|Corinne Bailey Rae;גן סגור|גידי גוב;Thinking out Loud|Ed Sheeran;Perfect|Ed Sheeran;אהבתיה|שלמה ארצי;Sunny|Bobby Hebb;ואולי|אריק איינשטיין;Riptide|Vance Joy;כשאת בוכה את לא יפה|אריק איינשטיין;I'm Yours|Jason Mraz;אוהב להיות בבית|אריק איינשטיין;Home|Edward Sharpe;ברית עולם|מתי כספי;Brown Eyed Girl|Van Morrison;יהיה טוב|דויד ברוזה;Don't Worry Be Happy|Bobby McFerrin;יושב על הגדר|אריק איינשטיין;Sweet Caroline|Neil Diamond;גבר הולך לאיבוד|שלמה ארצי;Walking On Sunshine|Katrina & The Waves;שיר המכולת|כוורת;רדיו חזק|תיסלם;יו יה|כוורת;נתתי לה חיי|כוורת;גוליית|כוורת")},
 {id:'33kVEsOSw7EhgpKBnRwtHW',n:'מקשטים בצ׳יל',e:'🎈',c:'#ff5f8f',d:'#d23b6c',s:R("המבט בעיניך|אגם בוחבוט;תמיד רציתי עוד|נועם בתן;אביר על סוס לבן|שירה זלוף;03|איתי לוי;עשר רמות מעליו|אודיה;מדליקה לי הכל|עדן חסון;Just the Way You Are|Bruno Mars;Treasure|Bruno Mars;אבי הטחול|רואי אדם;מלכת הדור|עומר אדם;נתתי לך בית|אופק אדנק;Shape of You|Ed Sheeran;תן לי את האששש|יסמין מועלם;שני משוגעים|עומר אדם;את חסרה לי|עדן חסון;Sugar|Maroon 5;לאב סונג|נועה קירל;רק שלך|עומר אדם;יוצאת מן הכלל|אופק אדנק;Don't Start Now|Dua Lipa;תהיה בנאדם|מתן חסן;צ'יק צ'ק|סטטיק;עד שתבואי עד אליי|עדן חסון;As It Was|Harry Styles;רחוק מכולם|עומר אדם;נאדי באדי|אגם בוחבוט;להציל אותי|יסמין מועלם;Photograph|Ed Sheeran;בריידזילה|נועה קירל;לילות וקללות|עומר אדם;Kawaii|סטטיק;Locked Out of Heaven|Bruno Mars;רולקס וקסקט|עדן בן זקן;טן טן טן|אופק אדנק;לא מעניין אותי|עדן חסון;Levitating|Dua Lipa;יחפים|יסמין מועלם;אני חוזר|מתן חסן;אם אתה גבר|נועה קירל;Castle on the Hill|Ed Sheeran;בא לה לרקוד|סטטיק;Watermelon Sugar|Harry Styles;Dance the Night|Dua Lipa")},
 {id:'7wF5NwxDqFnsL9ZdiK9Ghn',n:'קלאסיקות שכולם שרים',e:'🎸',c:'#ff7a3d',d:'#d35a20',s:R("Sir Duke|Stevie Wonder;רכבת לילה לקהיר|משינה;Take On Me|a-ha;שירת הסטיקר|הדג נחש;September|Earth, Wind & Fire;א-בא-ני-בי|יזהר כהן;Dancing Queen|ABBA;יש לך אותי|תיסלם;Girls Just Want to Have Fun|Cyndi Lauper;I Wanna Dance with Somebody|Whitney Houston;היא לא יודעת מה עובר עליי|שלמה ארצי;Superstition|Stevie Wonder;Happy|Pharrell Williams;חללית|גזוז;Can't Stop the Feeling|Justin Timberlake;אין מקום אחר|משינה;I Gotta Feeling|Black Eyed Peas;Golden Boy|נדב גדג';Uptown Funk|Mark Ronson, Bruno Mars;תנו לי רוקנ'רול|תיסלם;Billie Jean|Michael Jackson;Beat It|Michael Jackson;זמן להתעורר|הדג נחש;Another One Bites the Dust|Queen;Unicorn|נועה קירל;Don't Stop Me Now|Queen;Hakol Beseder – Remix|יהודית רביץ;Africa|Toto;Michelle|נועם בתן;Mr. Blue Sky|ELO;נצמדנו|שלמה ארצי;Wake Me Up Before You Go-Go|Wham!;היא לא תדע|גזוז;Livin' on a Prayer|Bon Jovi;שלח לי מלאך|משינה;Mamma Mia|ABBA;ארץ חדשה|שלמה ארצי;לזוז|הדג נחש;עוד פגישה|תיסלם;Toy|Netta;Diva|דנה אינטרנשיונל;הללויה|חלב ודבש")},
@@ -179,7 +181,7 @@ const P=[
 ];
 
 /* ---------- state ---------- */
-let cur=4, hl=0, playIdx=-1, playing=false, progMs=0, durMs=0, lastSync=0, playCtx=null;
+let cur=0, hl=0, playIdx=-1, playing=false, progMs=0, durMs=0, lastSync=0, playCtx=null;
 const $=id=>document.getElementById(id);
 const car=$('car'), list=$('list');
 let ls={};try{ls=window.localStorage}catch(e){}
@@ -199,7 +201,7 @@ const slots=P.map((p,i)=>{
   el.innerHTML=`<div class="badge" aria-hidden="true">${p.e}</div><div class="bname">${p.n}</div>
   <div class="nano"><div class="scr"><div class="scr-in">
     <div class="st"><span class="stt"></span><span class="cnt"></span></div>
-    <div class="pn">${p.e} ${p.n}</div><div class="tn"></div><div class="an"></div>
+    <div class="pn">${p.e} ${p.n}</div><div class="tn" dir="auto"></div><div class="an" dir="auto"></div>
     <div class="eq">${'<i></i>'.repeat(9)}</div><div class="bar"><b></b></div></div></div>
     <div class="wh">
       <button class="wb menu" data-a="menu" type="button" aria-label="תפריט">MENU</button>
@@ -237,7 +239,7 @@ function renderList(){
   $('pEm').textContent=p.e;$('pName').textContent=p.n;$('pCount').textContent=p.s.length+' שירים · נוגעים בשיר כדי לנגן אותו';
   $('openSp').href='https://open.spotify.com/playlist/'+p.id;
   const isCtx=playCtx===p.id;
-  list.innerHTML=p.s.map((s,i)=>`<button class="it${isCtx&&i===playIdx?' cur':''}${i===hl&&!(isCtx&&i===playIdx)?' hl':''}" data-i="${i}" type="button" role="listitem"><span class="n">${isCtx&&i===playIdx&&playing?'▶':i+1}</span><span style="min-width:0"><div class="a">${esc(s.name)}</div><div class="b">${esc(s.artist)}</div></span></button>`).join('');
+  list.innerHTML=p.s.map((s,i)=>`<button class="it${isCtx&&i===playIdx?' cur':''}${i===hl&&!(isCtx&&i===playIdx)?' hl':''}" data-i="${i}" type="button" role="listitem"><span class="n">${isCtx&&i===playIdx&&playing?'▶':i+1}</span><span style="min-width:0"><div class="a" dir="auto">${esc(s.name)}</div><div class="b" dir="auto">${esc(s.artist)}</div></span></button>`).join('');
 }
 function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function scrollTo(i){const b=list.querySelector(`[data-i="${i}"]`);if(b)b.scrollIntoView({block:'nearest',behavior:'smooth'})}
