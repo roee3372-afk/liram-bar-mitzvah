@@ -151,6 +151,25 @@ body.live .blobs i{opacity:.24}
 .dev{all:unset;cursor:pointer;box-sizing:border-box;display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 14px;min-height:64px;border-radius:18px;background:#f6f4fc}
 .dev .i{font-size:26px;text-align:center}.dev .n{font-weight:500;font-size:var(--t-body)}.dev .t{font-size:var(--t-small);color:var(--ink2)}
 .dev.on{background:linear-gradient(140deg,var(--c),var(--d));color:#fff}.dev.on .t{color:#ffffffd9}
+.qbtn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:10px;max-width:100%;min-height:48px;box-sizing:border-box;padding:0 18px;border-radius:99px;background:#ffffff1f;color:#fff}
+.qbtn:active{transform:scale(.96)}
+.qpanel{position:absolute;z-index:3;left:24px;top:max(88px,calc(env(safe-area-inset-top) + 76px));bottom:24px;width:min(400px,40vw);background:#10101aa6;-webkit-backdrop-filter:blur(24px) saturate(1.3);backdrop-filter:blur(24px) saturate(1.3);border-radius:28px;color:#fff;display:flex;flex-direction:column;transform:translateX(-115%);transition:transform .45s var(--ease);box-shadow:0 30px 60px -20px #0008}
+.full.q .qpanel{transform:none}
+.full.q .fwrap{transform:translateX(min(200px,18vw))}
+.fwrap{transition:transform .45s var(--ease)}
+.qh{display:flex;flex-direction:row-reverse;align-items:center;justify-content:space-between;padding:18px 18px 8px 18px}
+.qh h3{margin:0;font-family:Karantina,sans-serif;font-size:var(--t-h2);line-height:.9}
+.qh .x{position:static;background:#ffffff1f;color:#fff;box-shadow:none}
+.qsub{padding:0 18px 10px;font-size:var(--t-small);color:#ffffffb3}
+.qlist{overflow-y:auto;padding:0 10px 12px;display:flex;flex-direction:column;gap:2px}
+.qi{all:unset;cursor:pointer;display:grid;grid-template-columns:30px 46px minmax(0,1fr);gap:12px;align-items:center;padding:8px 10px;border-radius:16px;min-height:56px}
+.qi:active{background:#ffffff14}
+.qi .n{font-family:Karantina,sans-serif;font-size:26px;color:#ffffffa6;text-align:center}
+.qi .th{width:46px;height:46px;border-radius:10px;background:#ffffff22 center/cover}
+.qi .a{font-weight:500;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.qi .b{font-size:13px;color:#ffffffb3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.qi.now{background:#ffffff26}
+.qi:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .upnext{font-size:16px;color:#ffffffd9;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .upnext b{font-weight:500;color:#fff}
 .full .chip{position:absolute;top:max(20px,env(safe-area-inset-top));left:20px;background:#ffffff26;color:#fff;box-shadow:none}
@@ -168,6 +187,7 @@ body.live .blobs i{opacity:.24}
 @media (max-width:760px){.sheet{grid-template-columns:1fr;grid-template-rows:auto 1fr}.side{flex-direction:row;align-items:center}.cover{width:90px;font-size:40px}.btns{margin:0}.tile.mine{grid-column:span 1;aspect-ratio:1}}
 @media (prefers-reduced-motion:reduce){.cd,.eqm i,.rings span{animation:none!important}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 <body>
 <div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -213,6 +233,11 @@ body.live .blobs i{opacity:.24}
   <div class="rings"><span></span><span></span><span></span></div>
   <button class="x" id="fClose" type="button" aria-label="הקטנת הנגן">⌄</button>
   <button class="chip" id="dev2" type="button"><span aria-hidden="true">🔈</span><span class="dn">מאיפה לנגן?</span></button>
+  <aside class="qpanel" id="qpanel" aria-label="הבא בתור">
+    <div class="qh"><h3>הבא בתור</h3><button class="x" id="qClose" type="button" aria-label="סגירת הרשימה">✕</button></div>
+    <div class="qsub" id="qSub"></div>
+    <div class="qlist" id="qList"></div>
+  </aside>
   <div class="fwrap">
     <div class="cd" id="fCd"></div>
     <div class="t1" id="fT" dir="auto"></div>
@@ -223,7 +248,7 @@ body.live .blobs i{opacity:.24}
       <button class="ib main" data-a="toggle" type="button" aria-label="נגן או עצור" id="fPP"></button>
       <button class="ib" data-a="next" type="button" aria-label="שיר הבא"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM14.5 12 5 19V5z"/></svg></button>
     </div>
-    <div class="upnext" id="fNext" dir="auto"></div>
+    <button class="qbtn" id="qOpen" type="button" aria-expanded="false" aria-controls="qpanel"><span aria-hidden="true">☰</span><span class="upnext" id="fNext" dir="auto"></span></button>
     <div class="pl" id="fPl"></div>
   </div>
 </section>
@@ -310,7 +335,7 @@ function renderPlayer(){
   $('fBg').style.backgroundImage=img?`url("${img}")`:'';
   $('mT').textContent=$('fT').textContent=s.name||'';$('mA').textContent=$('fA').textContent=s.artist||'';
   $('fPl').textContent=p.e+' '+p.n;
-  const nx=p.s[playIdx+1];$('fNext').innerHTML=nx?'הבא בתור: <b>'+esc(nx.name)+'</b> · '+esc(nx.artist):'';document.body.classList.toggle('live',playing);$('mPP').innerHTML=$('fPP').innerHTML=playing?PAUSE:PLAY;
+  const nx=p.s[playIdx+1];$('fNext').innerHTML=nx?'הבא בתור: <b>'+esc(nx.name)+'</b> · '+esc(nx.artist):'זה השיר האחרון בפלייליסט';renderQueue();document.body.classList.toggle('live',playing);$('mPP').innerHTML=$('fPP').innerHTML=playing?PAUSE:PLAY;
   $('mini').classList.toggle('playing',playing);$('full').classList.toggle('playing',playing);
 }
 function render(){paintTiles();renderList();renderPlayer()}
@@ -318,10 +343,18 @@ $('mini').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b
 $('mini').addEventListener('keydown',e=>{if(e.key==='Enter')openFull()});
 $('full').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b)act(b.dataset.a)});
 let fullFrom=null;function openFull(){const t=curTrack();if(t)setTheme(t.p);fullFrom=document.activeElement;$('full').classList.add('on');setInert();setTimeout(()=>$('fClose').focus({preventScroll:true}),60)}
-function closeFull(){$('full').classList.remove('on');setInert();if(fullFrom&&fullFrom.focus)fullFrom.focus({preventScroll:true})}
+function closeFull(){$('full').classList.remove('on','q');$('qpanel').inert=true;setInert();if(fullFrom&&fullFrom.focus)fullFrom.focus({preventScroll:true})}
 $('fClose').onclick=closeFull;
 function act(a){tick(a==='next'?2000:a==='prev'?1600:900);if(a==='toggle')toggle();else if(a==='next')skip(1);else if(a==='prev')skip(-1)}
 
+function renderQueue(){const t=curTrack();if(!t)return;const {p}=t;const from=Math.max(0,playIdx);
+  $('qSub').textContent=p.e+' '+p.n+' · עוד '+Math.max(0,p.s.length-from-1)+' שירים';
+  $('qList').innerHTML=p.s.slice(from).map((s,k)=>{const i=from+k;return `<button class="qi${i===playIdx?' now':''}" data-i="${i}" type="button" aria-label="${esc(s.name)}, ${esc(s.artist)}${i===playIdx?' – מתנגן עכשיו':''}"><span class="n" aria-hidden="true">${i===playIdx?'♪':i+1}</span><span class="th" style="${s.img?`background-image:url('${s.img}')`:`background:linear-gradient(140deg,${p.c},${p.d})`}"></span><span style="min-width:0"><div class="a" dir="auto">${esc(s.name)}</div><div class="b" dir="auto">${esc(s.artist)}</div></span></button>`}).join('')}
+function toggleQueue(on){const f=$('full');on=on===undefined?!f.classList.contains('q'):on;f.classList.toggle('q',on);$('qOpen').setAttribute('aria-expanded',on);$('qpanel').inert=!on;if(on){renderQueue();setTimeout(()=>{const n=$('qList').querySelector('.now');(n||$('qClose')).focus({preventScroll:true})},80)}else $('qOpen').focus({preventScroll:true})}
+$('qOpen').addEventListener('click',e=>{e.stopPropagation();toggleQueue()});
+$('qClose').addEventListener('click',e=>{e.stopPropagation();toggleQueue(false)});
+$('qList').addEventListener('click',e=>{e.stopPropagation();const b=e.target.closest('[data-i]');if(!b)return;const t=curTrack();if(t)playAt(t.pi,+b.dataset.i)});
+$('qpanel').inert=true;
 /* background visualizer */
 const viz=$('viz');for(let k=0;k<40;k++)viz.appendChild(document.createElement('i'));
 setInterval(()=>{const bars=viz.children;for(let k=0;k<bars.length;k++){const base=playing?.25+.55*Math.abs(Math.sin(Date.now()/400+k*.6))*Math.random():.06;bars[k].style.height=(base*100)+'%'}},260);
@@ -372,11 +405,17 @@ async function retryPending(){if(!pending||!token())return;const want=pending;
     if(r===true){pending=null;playCtx=want.ctx;playIdx=want.idx;nowItem=P[pi].s[want.idx];playing=true;lastSync=Date.now();toast('מנגן ✓',1800);render();soon();return}}}
 
 function announce(){const t=curTrack();if(t)$('live').textContent='מתנגן: '+(t.s.name||'')+', '+(t.s.artist||'')}
-function celebrate(){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const fx=$('fx');const src=($('full').classList.contains('on')?$('fCd'):$('mCd')).getBoundingClientRect();
-  const cx=src.left+src.width/2,cy=src.top+src.height/2,cols=[getComputedStyle(document.documentElement).getPropertyValue('--c'),'#ffb400','#ff3fb4','#00c2a8','#ffffff'];
-  for(let k=0;k<28;k++){const d=document.createElement('i');d.className='conf';d.style.background=cols[k%cols.length];d.style.left=cx+'px';d.style.top=cy+'px';fx.appendChild(d);
-    const a=Math.random()*Math.PI*2,v=120+Math.random()*220,dx=Math.cos(a)*v,dy=Math.sin(a)*v-160;
-    d.animate([{transform:'translate(-50%,-50%) rotate(0)',opacity:1},{transform:`translate(${dx}px,${dy+260}px) rotate(${Math.random()*720}deg)`,opacity:0}],{duration:1100+Math.random()*500,easing:'cubic-bezier(.2,.7,.4,1)'}).onfinish=()=>d.remove()}}
+function celebrate(){
+  if(typeof confetti!=='function'||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const t=curTrack();const c=t?[t.p.c,t.p.d]:['#7c4dff','#5a2fd6'];const colors=[...c,'#ffb400','#ff3fb4','#00c2a8','#ffffff'];
+  const el=($('full').classList.contains('on')?$('fCd'):$('mCd')).getBoundingClientRect();
+  const x=(el.left+el.width/2)/innerWidth,y=(el.top+el.height/2)/innerHeight;
+  const big=$('full').classList.contains('on');
+  const base={colors,disableForReducedMotion:true,zIndex:90,ticks:big?320:240,gravity:1.05,scalar:big?1.15:.95};
+  confetti({...base,particleCount:big?110:70,spread:big?100:80,startVelocity:big?48:38,origin:{x,y}});
+  setTimeout(()=>confetti({...base,particleCount:big?60:36,spread:120,startVelocity:30,shapes:['star'],scalar:big?1.5:1.2,origin:{x,y}}),140);
+  if(big){confetti({...base,particleCount:60,angle:60,spread:60,startVelocity:60,origin:{x:0,y:.9}});confetti({...base,particleCount:60,angle:120,spread:60,startVelocity:60,origin:{x:1,y:.9}})}
+}
 /* sync */
 let syncT=null;function soon(){clearTimeout(syncT);syncT=setTimeout(sync,900)}
 async function sync(){if(!token())return;const r=await api('GET','/me/player');
@@ -423,7 +462,7 @@ async function loadPlaylists(){
 function setAcct(){const ok=!!token();$('acct').classList.toggle('ok',ok);$('acct').querySelector('span').textContent=ok?'מחובר לספוטיפיי':'לא מחובר לספוטיפיי'}
 $('acct').onclick=()=>{if(!token())$('login').hidden=false};
 $('loginBtn').onclick=login;$('skip').onclick=()=>{$('login').hidden=true;store.set('sp_skip','1')};
-addEventListener('keydown',e=>{if(e.key==='Escape'){if($('devs').classList.contains('on'))closeDevs();else if($('full').classList.contains('on'))closeFull();else closeSheet()}});
+addEventListener('keydown',e=>{if(e.key==='Escape'){if($('full').classList.contains('q'))toggleQueue(false);else if($('devs').classList.contains('on'))closeDevs();else if($('full').classList.contains('on'))closeFull();else closeSheet()}});
 
 /* ---------- device picker ---------- */
 const DIC={Computer:'💻',Smartphone:'📱',Tablet:'📲',Speaker:'🔊',TV:'📺',CastAudio:'🔊',AVR:'🔊',Automobile:'🚗'};
