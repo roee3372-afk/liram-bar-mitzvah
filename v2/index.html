@@ -144,6 +144,11 @@ body.live .blobs i{opacity:.24}
 .ctrls{display:flex;align-items:center;gap:28px;direction:ltr}
 .ctrls .ib{width:66px;height:66px;color:#fff;background:#ffffff22}
 .ctrls .ib svg{width:30px;height:30px}
+.ctrls .ib.shuf{width:58px;height:58px;background:transparent;position:relative;color:#ffffffb3}
+.ctrls .ib.shuf svg{width:26px;height:26px}
+.ctrls .ib.shuf.on{color:#fff;background:#ffffff2e}
+.ctrls .ib.shuf.on::after{content:"";position:absolute;bottom:6px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#fff}
+.shuflbl{font-size:13px;color:#ffffffcc;margin-top:-14px;min-height:16px}
 .ctrls .ib.main{width:92px;height:92px;background:#fff;color:var(--d)}
 .ctrls .ib.main svg{width:40px;height:40px}
 .full .x{background:#ffffff26;color:#fff;top:max(20px,env(safe-area-inset-top));right:20px;left:auto;width:52px;height:52px;box-shadow:none}
@@ -243,11 +248,14 @@ body.live .blobs i{opacity:.24}
     <div class="cd" id="fCd"></div>
     <div class="t1" id="fT" dir="auto"></div>
     <div class="t2" id="fA" dir="auto"></div>
+    <div class="shuflbl" id="fShufL" aria-hidden="true"></div>
     <div class="fbar"><b id="fBar" style="display:block;height:100%;width:0"></b></div>
     <div class="ctrls">
+      <button class="ib shuf" id="fShuf" data-a="shuffle" type="button" aria-pressed="false" aria-label="ניגון אקראי"><svg viewBox="0 0 24 24"><path d="M17 3l4 4-4 4V8h-2.2l-3.1 3.6-1.3-1.5L13.9 6H17V3zM3 6h4.1l9.6 11H17v-3l4 4-4 4v-3h-3.1L4.3 8H3V6zm0 10h3.2l2.2-2.6 1.3 1.5L7.1 18H3v-2z"/></svg></button>
       <button class="ib" data-a="prev" type="button" aria-label="שיר קודם"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM9.5 12 19 5v14z"/></svg></button>
       <button class="ib main" data-a="toggle" type="button" aria-label="נגן או עצור" id="fPP"></button>
       <button class="ib" data-a="next" type="button" aria-label="שיר הבא"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM14.5 12 5 19V5z"/></svg></button>
+      <span aria-hidden="true" style="width:58px;flex:0 0 58px"></span>
     </div>
     <button class="qbtn" id="qOpen" type="button" aria-expanded="false" aria-controls="qpanel"><span aria-hidden="true">☰</span><span class="upnext" id="fNext" dir="auto"></span></button>
     <div class="pl" id="fPl"></div>
@@ -296,6 +304,7 @@ let ac=null;function _tickUnused(f=1500){try{ac=ac||new (window.AudioContext||wi
 function setTheme(p){document.documentElement.style.setProperty('--c',p.c);document.documentElement.style.setProperty('--d',p.d)}
 
 /* ---------- state ---------- */
+let shuffle=false,realQueue=null;
 let custom=null; /* {id, order:[indices into p.s]} session-only play order */
 let open=-1, playCtx=null, playIdx=-1, playing=false, progMs=0, durMs=0, lastSync=0, nowItem=null, pending=null;
 
@@ -325,7 +334,7 @@ function renderList(){if(open<0)return;const p=P[open];const isCtx=playCtx===p.i
   $('sPlay').innerHTML=isCtx&&playing?'❚❚ השהיה':'▶ ניגון'}
 $('sList').onclick=e=>{const b=e.target.closest('[data-i]');if(b)playAt(open,+b.dataset.i)};
 $('sPlay').onclick=()=>{const p=P[open];if(playCtx===p.id)toggle();else playAt(open,0)};
-$('sShuf').onclick=()=>{const p=P[open];playAt(open,Math.floor(Math.random()*p.s.length))};
+$('sShuf').onclick=async()=>{const p=P[open],pi=open;await playAt(pi,Math.floor(Math.random()*p.s.length));if(!shuffle)setShuffle(true)};
 $('sClose').onclick=closeSheet;$('veil').onclick=()=>{if($('full').classList.contains('on'))return;closeSheet()};
 
 /* ---------- player UI ---------- */
@@ -337,7 +346,7 @@ function renderPlayer(){
   $('fBg').style.backgroundImage=img?`url("${img}")`:'';
   $('mT').textContent=$('fT').textContent=s.name||'';$('mA').textContent=$('fA').textContent=s.artist||'';
   $('fPl').textContent=p.e+' '+p.n;
-  const _o=curOrder(p),nx=p.s[_o[_o.indexOf(playIdx)+1]];$('fNext').innerHTML=nx?'הבא בתור: <b>'+esc(nx.name)+'</b> · '+esc(nx.artist):'זה השיר האחרון בפלייליסט';renderQueue();document.body.classList.toggle('live',playing);$('mPP').innerHTML=$('fPP').innerHTML=playing?PAUSE:PLAY;
+  const _o=curOrder(p),nx=shuffle?(realQueue&&realQueue[0]):p.s[_o[_o.indexOf(playIdx)+1]];$('fNext').innerHTML=nx?'הבא בתור: <b>'+esc(nx.name)+'</b> · '+esc(nx.artist):(shuffle?'הבא בתור: שיר אקראי':'זה השיר האחרון בפלייליסט');renderQueue();document.body.classList.toggle('live',playing);$('mPP').innerHTML=$('fPP').innerHTML=playing?PAUSE:PLAY;
   $('mini').classList.toggle('playing',playing);$('full').classList.toggle('playing',playing);
 }
 function render(){paintTiles();renderList();renderPlayer()}
@@ -347,16 +356,19 @@ $('full').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b
 let fullFrom=null;function openFull(){const t=curTrack();if(t)setTheme(t.p);fullFrom=document.activeElement;$('full').classList.add('on');setInert();setTimeout(()=>$('fClose').focus({preventScroll:true}),60)}
 function closeFull(){$('full').classList.remove('on','q');$('qpanel').inert=true;setInert();if(fullFrom&&fullFrom.focus)fullFrom.focus({preventScroll:true})}
 $('fClose').onclick=closeFull;
-function act(a){tick(a==='next'?2000:a==='prev'?1600:900);if(a==='toggle')toggle();else if(a==='next')skip(1);else if(a==='prev')skip(-1)}
+function act(a){if(a==='shuffle'){setShuffle(!shuffle);return}if(a==='toggle')toggle();else if(a==='next')skip(1);else if(a==='prev')skip(-1)}
 
 function curOrder(p){return custom&&custom.id===p.id?custom.order:p.s.map((_,i)=>i)}
-function renderQueue(){const t=curTrack();if(!t)return;const {p}=t;const ord=curOrder(p);const pos=Math.max(0,ord.indexOf(playIdx));
+function renderQueue(){const t=curTrack();if(!t)return;const {p}=t;
+  if(shuffle){const q=(realQueue||[]).slice(0,30);$('qSub').textContent=p.e+' '+p.n+' · אקראי פעיל';
+    const cur=p.s[playIdx]||nowItem||{};
+    $('qList').innerHTML=[cur,...q].map((s,k)=>{const now=k===0,i=p.s.findIndex(x=>x.uri&&x.uri===s.uri);return `<div class="qrow"><button class="qi${now?' now':''}" ${i>=0?`data-i="${i}"`:''} type="button" aria-label="${esc(s.name)}, ${esc(s.artist)}${now?' – מתנגן עכשיו':''}"><span class="n" aria-hidden="true">${now?'♪':k}</span><span class="th" style="${s.img?`background-image:url('${s.img}')`:`background:linear-gradient(140deg,${p.c},${p.d})`}"></span><span style="min-width:0"><div class="a" dir="auto">${esc(s.name)}</div><div class="b" dir="auto">${esc(s.artist)}</div></span></button></div>`}).join('')+(q.length?'':'<div style="padding:14px;color:#ffffffb3">הסדר האקראי ייטען בעוד רגע…</div>');return}const ord=curOrder(p);const pos=Math.max(0,ord.indexOf(playIdx));
   $('qSub').textContent=p.e+' '+p.n+' · עוד '+Math.max(0,ord.length-pos-1)+' שירים'+(custom&&custom.id===p.id?'':'');
   $('qList').innerHTML=ord.slice(pos).map((i,k)=>{const s=p.s[i],now=i===playIdx;return `<div class="qrow" data-pos="${pos+k}"><button class="qi${now?' now':''}" data-i="${i}" type="button" aria-label="${esc(s.name)}, ${esc(s.artist)}${now?' – מתנגן עכשיו':''}"><span class="n" aria-hidden="true">${now?'♪':k}</span><span class="th" style="${s.img?`background-image:url('${s.img}')`:`background:linear-gradient(140deg,${p.c},${p.d})`}"></span><span style="min-width:0"><div class="a" dir="auto">${esc(s.name)}</div><div class="b" dir="auto">${esc(s.artist)}</div></span></button></div>`}).join('')}
 
 /* reorder upcoming songs (saved to the Spotify playlist) */
 
-function toggleQueue(on){const f=$('full');on=on===undefined?!f.classList.contains('q'):on;f.classList.toggle('q',on);$('qOpen').setAttribute('aria-expanded',on);$('qpanel').inert=!on;if(on){renderQueue();setTimeout(()=>{const n=$('qList').querySelector('.now');(n||$('qClose')).focus({preventScroll:true})},80)}else $('qOpen').focus({preventScroll:true})}
+function toggleQueue(on){const f=$('full');on=on===undefined?!f.classList.contains('q'):on;f.classList.toggle('q',on);$('qOpen').setAttribute('aria-expanded',on);$('qpanel').inert=!on;if(on){if(shuffle)loadQueue();renderQueue();setTimeout(()=>{const n=$('qList').querySelector('.now');(n||$('qClose')).focus({preventScroll:true})},80)}else $('qOpen').focus({preventScroll:true})}
 $('qOpen').addEventListener('click',e=>{e.stopPropagation();toggleQueue()});
 $('qClose').addEventListener('click',e=>{e.stopPropagation();toggleQueue(false)});
 $('qList').addEventListener('click',async e=>{e.stopPropagation();const b=e.target.closest('[data-i]');if(!b)return;const t=curTrack();if(!t)return;const i=+b.dataset.i;
@@ -427,10 +439,19 @@ function celebrate(){
   setTimeout(()=>confetti({...base,particleCount:big?60:36,spread:120,startVelocity:30,shapes:['star'],scalar:big?1.5:1.2,origin:{x,y}}),140);
   if(big){confetti({...base,particleCount:60,angle:60,spread:60,startVelocity:60,origin:{x:0,y:.9}});confetti({...base,particleCount:60,angle:120,spread:60,startVelocity:60,origin:{x:1,y:.9}})}
 }
+async function setShuffle(on){const prev=shuffle;shuffle=on;paintShuffle();if(!token()){return}
+  const r=await withDevice(dev=>api('PUT','/me/player/shuffle?state='+on+(dev?'&device_id='+dev:''),null,true));
+  if(r!==true){shuffle=prev;paintShuffle();toast('ספוטיפיי לא הצליח לשנות את מצב האקראי. נסו שוב.');return}
+  $('live').textContent=on?'ניגון אקראי פעיל':'ניגון לפי הסדר';setTimeout(loadQueue,600)}
+function paintShuffle(){const b=$('fShuf');b.classList.toggle('on',shuffle);b.setAttribute('aria-pressed',shuffle);$('fShufL').textContent=shuffle?'אקראי פעיל':'';renderPlayer()}
+async function loadQueue(){if(!token()||!shuffle){realQueue=null;renderPlayer();return}const r=await api('GET','/me/player/queue');
+  realQueue=r&&r.queue?r.queue.map(it=>{const im=it.album&&it.album.images;return{name:it.name,artist:(it.artists||[]).map(a=>a.name).join(', '),uri:it.uri,img:im&&(im[im.length>1?1:0]||{}).url}}):null;renderPlayer()}
 /* sync */
 let syncT=null;function soon(){clearTimeout(syncT);syncT=setTimeout(sync,900)}
 async function sync(){if(!token())return;const r=await api('GET','/me/player');
   if(r&&r.device&&r.device.id)store.set('sp_dev',r.device.id);
+  if(r&&typeof r.shuffle_state==='boolean'&&r.shuffle_state!==shuffle){shuffle=r.shuffle_state;paintShuffle();loadQueue()}
+  if(r&&r.item&&shuffle&&(!nowItem||nowItem.uri!==r.item.uri))setTimeout(loadQueue,300);
   if(r&&r.item){playing=!!r.is_playing;progMs=r.progress_ms||0;durMs=r.item.duration_ms||0;lastSync=Date.now();
     const im=r.item.album&&r.item.album.images&&r.item.album.images[0];nowItem={name:r.item.name,artist:(r.item.artists||[]).map(a=>a.name).join(', '),uri:r.item.uri,img:im&&im.url};
     const ctx=r.context&&r.context.uri&&r.context.uri.split(':').pop();const pi=P.findIndex(p=>p.id===ctx);
