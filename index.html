@@ -410,8 +410,8 @@ async function api(method,path,body,playCall){
     if(r.status===404&&playCall)return 'nodevice';
     if(r.status===401){store.del('sp_tok');return false}
     if(!r.ok)return false;
-    const txt=await r.text();return txt?JSON.parse(txt):true;
-  }catch(e){toast('אין חיבור לאינטרנט.');return false}
+    const txt=await r.text();if(!txt)return true;try{return JSON.parse(txt)}catch(_){return true};
+  }catch(e){if(navigator.onLine===false)toast('אין חיבור לאינטרנט.');return false}
 }
 
 /* load real tracklists from the account (keeps site in sync with Spotify) */
