@@ -169,14 +169,7 @@ body.live .blobs i{opacity:.24}
 .qi .a{font-weight:500;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
 .qi .b{font-size:13px;color:#ffffffb3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
 .qi.now{background:#ffffff26}
-.qrow{display:grid;grid-template-columns:minmax(0,1fr) 48px;align-items:center;border-radius:16px;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
-.qrow.dragging{touch-action:none}
-.qrow.dragging{background:#ffffff2e;box-shadow:0 14px 30px -10px #000a;scale:1.03;z-index:2;position:relative}
-.qrow.saving{opacity:.6}
-.grip{all:unset;cursor:grab;width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:12px;color:#ffffffb3;font-size:22px;touch-action:none}
-.grip:active{cursor:grabbing;background:#ffffff14}
-.grip:focus-visible{outline:3px solid #fff;outline-offset:-3px}
-.qhint{padding:0 18px 8px;font-size:13px;color:#ffffff99}
+.qrow{display:grid;grid-template-columns:minmax(0,1fr);align-items:center;border-radius:16px;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .qi:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .upnext{font-size:16px;color:#ffffffd9;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .upnext b{font-weight:500;color:#fff}
@@ -244,7 +237,6 @@ body.live .blobs i{opacity:.24}
   <aside class="qpanel" id="qpanel" aria-label="הבא בתור">
     <div class="qh"><h3>הבא בתור</h3><button class="x" id="qClose" type="button" aria-label="סגירת הרשימה">✕</button></div>
     <div class="qsub" id="qSub"></div>
-    <div class="qhint">גוררים את ⠿ כדי לשנות את סדר ההשמעה. הפלייליסט בספוטיפיי לא משתנה.</div>
     <div class="qlist" id="qList"></div>
   </aside>
   <div class="fwrap">
@@ -359,50 +351,15 @@ function act(a){tick(a==='next'?2000:a==='prev'?1600:900);if(a==='toggle')toggle
 
 function curOrder(p){return custom&&custom.id===p.id?custom.order:p.s.map((_,i)=>i)}
 function renderQueue(){const t=curTrack();if(!t)return;const {p}=t;const ord=curOrder(p);const pos=Math.max(0,ord.indexOf(playIdx));
-  $('qSub').textContent=p.e+' '+p.n+' · עוד '+Math.max(0,ord.length-pos-1)+' שירים'+(custom&&custom.id===p.id?' · סדר מותאם':'');
-  $('qList').innerHTML=ord.slice(pos).map((i,k)=>{const s=p.s[i],now=i===playIdx;return `<div class="qrow" data-pos="${pos+k}"><button class="qi${now?' now':''}" data-i="${i}" type="button" aria-label="${esc(s.name)}, ${esc(s.artist)}${now?' – מתנגן עכשיו':''}"><span class="n" aria-hidden="true">${now?'♪':k}</span><span class="th" style="${s.img?`background-image:url('${s.img}')`:`background:linear-gradient(140deg,${p.c},${p.d})`}"></span><span style="min-width:0"><div class="a" dir="auto">${esc(s.name)}</div><div class="b" dir="auto">${esc(s.artist)}</div></span></button>${now?'<span></span>':`<button class="grip" type="button" data-g="${pos+k}" aria-label="הזזת ${esc(s.name)}. חצים למעלה ולמטה משנים מקום">⠿</button>`}</div>`}).join('')}
+  $('qSub').textContent=p.e+' '+p.n+' · עוד '+Math.max(0,ord.length-pos-1)+' שירים'+(custom&&custom.id===p.id?'':'');
+  $('qList').innerHTML=ord.slice(pos).map((i,k)=>{const s=p.s[i],now=i===playIdx;return `<div class="qrow" data-pos="${pos+k}"><button class="qi${now?' now':''}" data-i="${i}" type="button" aria-label="${esc(s.name)}, ${esc(s.artist)}${now?' – מתנגן עכשיו':''}"><span class="n" aria-hidden="true">${now?'♪':k}</span><span class="th" style="${s.img?`background-image:url('${s.img}')`:`background:linear-gradient(140deg,${p.c},${p.d})`}"></span><span style="min-width:0"><div class="a" dir="auto">${esc(s.name)}</div><div class="b" dir="auto">${esc(s.artist)}</div></span></button></div>`}).join('')}
 
 /* reorder upcoming songs (saved to the Spotify playlist) */
-let applyT=null;
-function moveTrack(from,to){const t=curTrack();if(!t||from===to)return;const p=t.p;
-  const ord=curOrder(p).slice();const pos=ord.indexOf(playIdx);if(from<=pos)return;if(to<=pos)to=pos+1;if(to>=ord.length)to=ord.length-1;
-  const [it]=ord.splice(from,1);ord.splice(to,0,it);custom={id:p.id,order:ord};
-  renderQueue();$('live').textContent=p.s[it].name+' הועבר למקום '+(to-pos)+' בתור';
-  const g=$('qList').querySelector(`[data-g="${to}"]`);if(g&&document.activeElement&&document.activeElement.classList.contains('grip'))g.focus({preventScroll:true});
-  clearTimeout(applyT);applyT=setTimeout(applyOrder,700)}
-/* play the rest of the session order as a list of songs, continuing the current song where it is */
-async function applyOrder(){const t=curTrack();if(!t||!custom||custom.id!==t.p.id||!token())return;const p=t.p;
-  const pos=custom.order.indexOf(playIdx);const uris=custom.order.slice(pos).map(i=>p.s[i].uri).filter(Boolean);if(uris.length<2)return;
-  const ms=progMs+(playing?Date.now()-lastSync:0);
-  const r=await withDevice(dev=>api('PUT','/me/player/play'+(dev?'?device_id='+dev:''),{uris,position_ms:Math.max(0,Math.round(ms))},true));
-  if(r===true){playing=true;lastSync=Date.now();progMs=ms;render();soon()}else toast('לא הצלחתי לעדכן את סדר ההשמעה. נסו שוב.')}
-$('qList').addEventListener('keydown',e=>{const g=e.target.closest('.grip');if(!g)return;const i=+g.dataset.g;
-  if(e.key==='ArrowUp'){e.preventDefault();moveTrack(i,i-1)}else if(e.key==='ArrowDown'){e.preventDefault();moveTrack(i,i+1)}});
-/* drag: grip starts at once; the row itself starts after a small move with a mouse, or a long press on touch */
-let suppressClick=false;
-$('qList').addEventListener('pointerdown',e=>{
-  const row=e.target.closest('.qrow');if(!row||row.querySelector('.now'))return;
-  const list=$('qList'),onGrip=!!e.target.closest('.grip'),touch=e.pointerType!=='mouse';
-  const sx=e.clientX,sy=e.clientY;let dragging=false,lastY=sy,scroller=null,lp=null;
-  const start=()=>{if(dragging)return;dragging=true;suppressClick=true;row.classList.add('dragging');
-    scroller=setInterval(()=>{const r=list.getBoundingClientRect();if(lastY<r.top+50)list.scrollTop-=10;else if(lastY>r.bottom-50)list.scrollTop+=10},16)};
-  if(onGrip){e.preventDefault();start()}else if(touch){lp=setTimeout(start,320)}
-  const mv=ev=>{lastY=ev.clientY;
-    if(!dragging){const d=Math.hypot(ev.clientX-sx,ev.clientY-sy);if(touch){if(d>10)cleanup(false)}else if(d>6)start();if(!dragging)return}
-    ev.preventDefault();
-    const rows=[...list.querySelectorAll('.qrow')].filter(r=>r!==row&&!r.querySelector('.now'));
-    for(const r of rows){const b=r.getBoundingClientRect();if(ev.clientY>b.top&&ev.clientY<b.bottom){if(ev.clientY<b.top+b.height/2)list.insertBefore(row,r);else list.insertBefore(row,r.nextSibling);break}}};
-  const cleanup=commit=>{clearTimeout(lp);clearInterval(scroller);removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',cancel);
-    row.classList.remove('dragging');
-    if(commit&&dragging){const order=[...list.querySelectorAll('.qrow')];const from=+row.dataset.pos,to=+order[0].dataset.pos+order.indexOf(row);if(from===to)renderQueue();else moveTrack(from,to)}
-    setTimeout(()=>{suppressClick=false},0)};
-  const up=()=>cleanup(true),cancel=()=>{if(dragging)renderQueue();cleanup(false)};
-  addEventListener('pointermove',mv,{passive:false});addEventListener('pointerup',up);addEventListener('pointercancel',cancel)});
-$('qList').addEventListener('contextmenu',e=>{if(e.target.closest('.qrow'))e.preventDefault()});
+
 function toggleQueue(on){const f=$('full');on=on===undefined?!f.classList.contains('q'):on;f.classList.toggle('q',on);$('qOpen').setAttribute('aria-expanded',on);$('qpanel').inert=!on;if(on){renderQueue();setTimeout(()=>{const n=$('qList').querySelector('.now');(n||$('qClose')).focus({preventScroll:true})},80)}else $('qOpen').focus({preventScroll:true})}
 $('qOpen').addEventListener('click',e=>{e.stopPropagation();toggleQueue()});
 $('qClose').addEventListener('click',e=>{e.stopPropagation();toggleQueue(false)});
-$('qList').addEventListener('click',async e=>{e.stopPropagation();if(suppressClick){suppressClick=false;return}const b=e.target.closest('[data-i]');if(!b)return;const t=curTrack();if(!t)return;const i=+b.dataset.i;
+$('qList').addEventListener('click',async e=>{e.stopPropagation();const b=e.target.closest('[data-i]');if(!b)return;const t=curTrack();if(!t)return;const i=+b.dataset.i;
   if(custom&&custom.id===t.p.id&&token()){const ord=custom.order,pos=ord.indexOf(i);const uris=ord.slice(pos).map(k=>t.p.s[k].uri).filter(Boolean);
     starting=true;playIdx=i;nowItem=t.p.s[i];playing=true;progMs=0;lastSync=Date.now();render();
     const r=await withDevice(dev=>api('PUT','/me/player/play'+(dev?'?device_id='+dev:''),{uris,position_ms:0},true));starting=false;
